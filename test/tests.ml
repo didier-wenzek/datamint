@@ -1,6 +1,7 @@
 open OUnit2
 
 let suite = "datamint tests">:::[
+  Test_series.suite
 ]
 
 let () =
