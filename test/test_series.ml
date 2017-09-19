@@ -20,5 +20,10 @@ let suite = "series">:::[
   test_transducer "map" (Bounded.map succ) [1;2;3] [2;3;4];
   test_transducer "filter" (Bounded.filter (gt 0)) [-1;-2;3] [3];
   test_reducer "sum" (Bounded.reduce sum) [1;2;3;4] 10;
+  test_transducer "unique" (Bounded.unique) [1;2;2;3;1;4] [1;2;3;4];
+  test_transducer "unique" (Bounded.unique) [1;4;2;3;1;2] [1;4;2;3];
+  test_transducer "unique" (Bounded.unique) [] [];
+  test_reducer "string reducer" (Bounded.show "(" ", " ")" string_of_int) [1;2;3;4] "(1, 2, 3, 4)";
+  test_reducer "string reducer" (Bounded.show "(" ", " ")" string_of_int) [] "()";
 ]
 

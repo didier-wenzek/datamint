@@ -19,11 +19,11 @@ let producer_of_source xs =
   let iter r = 
     match r.full_check with
     | None ->
-      xs.fold r.push (r.init ())
+      xs.fold r.push (r.seed)
     | Some full_check ->
       with_return (fun return ->
         let push x s = if full_check s then return s else r.push x s in
-        xs.fold push (r.init ())
+        xs.fold push (r.seed)
       )
   in
   { iter }
@@ -48,7 +48,7 @@ let bounded_generator seed next is_done =
   in
   producer_of_generator { seed; next; }
 
-let iter r xs seed = xs.iter Reducer.{ r with init = constant seed}
+let iter r xs seed = xs.iter Reducer.{ r with seed}
 let iter_and_term r xs = r.Reducer.term (xs.iter r)
 
 let union_reducer red =
@@ -63,14 +63,14 @@ let transduce seed step term done_check =
     let open Reducer in
     let push x (s,acc) =
       let (s,ys) = step x s in
-      let acc = ys.iter { r with init = constant acc } in
+      let acc = ys.iter { r with seed = acc } in
       (s, acc)
     in
     let term (s,acc) =
       let ys = term s in
-      ys.iter { r with init = constant acc }
+      ys.iter { r with seed = acc }
     in
-    { init = init_with_seed seed r;
+    { seed = combine_seeds seed r.seed;
       push;
       term;
       full_check = combine_full_checks done_check r;
@@ -89,10 +89,10 @@ let forall p xs = xs |> map p |> reduce Reducer.and_reducer
 let exists p xs = xs |> map p |> reduce Reducer.or_reducer
 let is_empty xs = forall (fun _ -> false) xs                                                                                                                                                                     
 
-let empty = { iter = fun r -> Reducer.(r.init ()) }
-let singleton x = { iter = fun r -> Reducer.(r.init () |> r.push x) }
+let empty = { iter = fun r -> Reducer.(r.seed) }
+let singleton x = { iter = fun r -> Reducer.(r.seed |> r.push x) }
 let sonc xs x = { iter = fun r -> Reducer.(xs.iter r |> r.push x) }
-let cons x xs = { iter = fun r -> Reducer.(r.init () |> r.push x |> iter r xs) }
+let cons x xs = { iter = fun r -> Reducer.(r.seed |> r.push x |> iter r xs) }
 let append xs ys = { iter = fun r -> Reducer.(xs.iter r |> iter r ys) }
 let concat xss = { iter = fun r -> xss.iter Reducer.{ r with push = iter r } }
 
@@ -106,7 +106,7 @@ let rolling red xs = { iter = fun r -> iter_and_term Reducer.(rolling red { r wi
 let interpose sep xs = { iter = fun r -> iter_and_term Reducer.(interpose sep { r with term = id }) xs }
 let before_each sep xs = { iter = fun r -> xs.iter (Reducer.before_each sep r) }
 let after_each sep xs = { iter = fun r -> xs.iter (Reducer.after_each sep r) }
-let decorate fst lst xs = { iter = fun r -> Reducer.(r.init () |> r.push fst |> iter r xs |> r.push lst) }
+let decorate fst lst xs = { iter = fun r -> Reducer.(r.seed |> r.push fst |> iter r xs |> r.push lst) }
 let dedupe xs = { iter = fun r -> iter_and_term Reducer.(dedupe { r with term = id }) xs }
 let unique xs = { iter = fun r -> iter_and_term Reducer.(unique { r with term = id }) xs }
 
