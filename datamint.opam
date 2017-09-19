@@ -6,4 +6,10 @@ license: "GPL"
 build: [
   ["jbuilder" "build" "--only" "datamint" "--root" "." "-j" jobs "@install"]
 ]
-
+build-test: [
+  ["jbuilder" "runtest" "-j" jobs]
+]
+depends: [
+  "jbuilder" {build}
+  "oUnit"  {test}
+]   
