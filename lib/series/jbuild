@@ -1,0 +1,6 @@
+(jbuild_version 1)
+
+(library
+ ((name Series)
+  (public_name datamint.series)
+  (libraries (datamint.util))))

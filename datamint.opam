@@ -1,0 +1,9 @@
+opam-version: "1.2"                                                                                                                                                                                        
+version: "0.1.0"
+maintainer: "Didier Wenzek <didier.wenzek@acidalie.com>"
+authors: ["Didier Wenzek <didier.wenzek@acidalie.com>"]
+license: "GPL"
+build: [
+  ["jbuilder" "build" "--only" "datamint" "--root" "." "-j" jobs "@install"]
+]
+
