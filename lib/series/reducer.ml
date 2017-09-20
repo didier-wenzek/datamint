@@ -216,17 +216,6 @@ let dedupe r =
     full_check = combine_full_checks None r;
   }
 
-let unique r =
-  let insert x xs = Hashtbl.add xs x (); xs in
-  let push x ((xs,s) as xss) =
-    if Hashtbl.mem xs x then xss
-    else (insert x xs, r.push x s)
-  in
-  let init () = (Hashtbl.create 1024, r.seed) in
-  let term = term_ignoring_state r in
-  let full_check = None in
-  of_buffer ~init ~push ~term ~full_check
-
 let first = {
   seed = None;
   push = (fun x -> function None -> Some x | xs -> xs);
@@ -268,11 +257,42 @@ let list_reducer = {
   term = List.rev
 }
 
-(*
-let hash_reducer = {
-  init = (fun () -> Hashtbl.create 1024);
-  push = (fun (k,v) xs -> Hashtbl.add xs k v; xs);
-  term = id;
-  full_check = None;
-}
-*)
+let hash_reducer =
+  let init () = Hashtbl.create 1024 in
+  let push (k,v) xs = Hashtbl.add xs k v; xs in
+  let buffer = function
+    | None -> init ()
+    | Some buffer -> buffer
+  in
+  let push x acc =
+    Some (push x (buffer acc))
+  in
+  let term acc =
+    (buffer acc)
+  in {
+    seed = None;
+    push;
+    term;
+    full_check = None;
+  }
+
+let unique r =
+  let insert x xs = Hashtbl.add xs x (); xs in
+  let push x = function
+    | (None, s) ->
+      let xs = Hashtbl.create 1024 in
+      (Some (insert x xs), r.push x s)
+    | (Some xs, s) as xss when Hashtbl.mem xs x ->
+      xss
+    | (Some xs, s) ->
+      (Some (insert x xs), r.push x s)
+  in
+  let term (_, s) =
+    r.term s
+  in {
+    seed = (None, r.seed);
+    push;
+    term;
+    full_check = None;
+  }
+

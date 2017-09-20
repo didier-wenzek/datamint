@@ -87,7 +87,7 @@ let unnest f xs = { iter = fun r -> xs.iter (Reducer.unnest iter f r) }
 
 let forall p xs = xs |> map p |> reduce Reducer.and_reducer
 let exists p xs = xs |> map p |> reduce Reducer.or_reducer
-let is_empty xs = forall (fun _ -> false) xs                                                                                                                                                                     
+let is_empty xs = forall (fun _ -> false) xs
 
 let empty = { iter = fun r -> Reducer.(r.seed) }
 let singleton x = { iter = fun r -> Reducer.(r.seed |> r.push x) }
