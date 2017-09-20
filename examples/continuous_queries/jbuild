@@ -2,6 +2,6 @@
 
 (executables
  ((names (run_continuously))
-  (libraries (datamint lwt.unix))
+  (libraries (datamint lwt.unix str))
   (public_names (run_continuously))
   (package datamint-examples)))

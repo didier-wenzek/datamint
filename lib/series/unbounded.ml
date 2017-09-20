@@ -201,3 +201,7 @@ let unique xs = { generator = fun r -> xs.generator (Reducer.unique r) |> hoist_
 
 let decorate fst lst xs =
   append (singleton fst) (append xs (singleton lst))
+
+let group_updates key value red insert remove xs =
+  { generator = fun r -> xs.generator (Mapping.group_updates key value red insert remove r) |> hoist_inner_state }
+
