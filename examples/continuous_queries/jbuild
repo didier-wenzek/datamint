@@ -1,0 +1,7 @@
+(jbuild_version 1)
+
+(executables
+ ((names (run_continuously))
+  (libraries (datamint lwt.unix))
+  (public_names (run_continuously))
+  (package datamint-examples)))
