@@ -59,3 +59,7 @@ module Result = struct
     | Error e -> f e
 
 end
+
+module Either = struct
+  type ('a,'b) t = Left of 'a | Right of 'b
+end

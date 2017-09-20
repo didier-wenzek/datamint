@@ -102,8 +102,6 @@ let of_bounded =
     }
   }
 
-type ('a, 'b) either = Left of 'a | Right of 'b
-
 let append xs ys =
   { generator = fun red ->
     let xs_gen = xs.generator red in
@@ -113,21 +111,21 @@ let append xs ys =
     let next_xs s =
       xs_gen.next s
       >|= function
-      | Continue (s,acc) -> Continue (Left s, acc)
-      | Done (s,acc) -> Continue (Right ys_seed, acc)
+      | Continue (s,acc) -> Continue (Either.Left s, acc)
+      | Done (s,acc) -> Continue (Either.Right ys_seed, acc)
     in
     let next_ys s =
       ys_gen.next s
       >|= function
-      | Continue (s,acc) -> Continue (Right s, acc)
-      | Done (s,acc) -> Done (Right s, acc)
+      | Continue (s,acc) -> Continue (Either.Right s, acc)
+      | Done (s,acc) -> Done (Either.Right s, acc)
     in
     {
-      seed = (Left xs_seed, red_seed);
+      seed = (Either.Left xs_seed, red_seed);
       next = (fun (s,acc) ->
         match s with
-        | Left s -> next_xs (s,acc)
-        | Right s -> next_ys (s,acc)
+        | Either.Left s -> next_xs (s,acc)
+        | Either.Right s -> next_ys (s,acc)
       );
       view = (fun (_, acc) -> Lwt.return (red.Reducer.term acc));
     }
