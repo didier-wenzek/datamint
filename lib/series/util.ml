@@ -17,3 +17,45 @@ let constant c x = c
 let with_return (type t) f =
   let module M = struct exception Return of t end in
   try f (fun x -> raise (M.Return x)) with M.Return x -> x
+
+module Option = struct
+
+  let none = None
+  let some x = Some x
+
+  let map f = function
+    | None -> None
+    | Some x -> Some (f x)
+
+  let flat_map f = function
+    | None -> None
+    | Some x -> f x
+
+  let (>>=) x f = match x with
+    | None -> None
+    | Some x -> f x
+
+  let (>|=) x f = match x with
+    | None -> None
+    | Some x -> Some (f x)                                                                                                                                                                                 
+
+  let default e = function
+    | Some x -> x
+    | None -> e
+
+  let if_none f = function
+    | Some x -> x
+    | None -> f ()
+
+  let none_if_notfound f x =
+    try Some (f x)
+    with Not_found -> None
+end
+
+module Result = struct
+
+  let on_error f = function
+    | Ok x -> x
+    | Error e -> f e
+
+end
