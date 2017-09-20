@@ -2,6 +2,6 @@
 
 (executables
  ((names (run_continuously))
-  (libraries (datamint datamint.kafka lwt.unix str))
+  (libraries (datamint datamint.kafka datamint.kyoto lwt.unix str))
   (public_names (run_continuously))
   (package datamint-examples)))

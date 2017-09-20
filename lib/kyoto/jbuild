@@ -1,0 +1,6 @@
+(jbuild_version 1)
+
+(library
+ ((name KyotoStore)
+  (public_name datamint.kyoto)
+  (libraries (datamint kyotocabinet))))

@@ -1,0 +1,11 @@
+opam-version: "1.2"                                                                                                                                                                                        
+version: "0.1.0"
+license: "MIT"
+build: [
+  ["jbuilder" "build" "-j" jobs "@install"]
+]
+depends: [
+  "datamint"
+  "kyotocabinet"
+  "jbuilder" {build}
+]   

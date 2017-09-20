@@ -46,16 +46,23 @@ let loop2' () =
   |> Dataset.persist_view file 
   |> Dataset.run "/tmp/" "query_2_prime"
 
-(*
+let kyoto_string_int_store =
+  let encode_key = id in
+  let decode_key = id in
+  let encode_value = string_of_int in
+  let decode_value = int_of_string in
+  fun file_path ->
+    KyotoStore.KVStore.store ~encode_key ~decode_key ~encode_value ~decode_value ~file_path
+
 let loop3 () =
   let open Store in
-  let store = Sift_kyoto.store id id string_of_int int_of_string "word_count.kct" in
+  let count = Reducer.map (constant 1) sum in
+  let store = kyoto_string_int_store "word_count.kct" in
   KafkaStore.Source.kafka_partition "localhost" "test" 1
   |> Dataset.flat_map words
   |> Dataset.group id id count
   |> Dataset.persist_state store 
   |> Dataset.run "/tmp/" "query_3"
-*)
   
 let loop4 () =
   let open Store in
@@ -65,10 +72,10 @@ let loop4 () =
   |> Dataset.log log 
   |> Dataset.run "/tmp/" "query_4"
 
-(*
 let loop5 () =
+  let count = Reducer.map (constant 1) sum in
   let log = Store.file_logger id "word_count_updates.log" in
-  let store = Sift_kyoto.store id id string_of_int int_of_string "word_count_looking_new_words.kct" in
+  let store = kyoto_string_int_store "word_count_looking_new_words.kct" in
   let insert (w,c) = Format.sprintf "new word with %d samples: %s" c w in
   let remove (w,c) = Format.sprintf "word %s has now more than %d samples" w c in
   KafkaStore.Source.kafka_partition "localhost" "test" 1
@@ -78,8 +85,10 @@ let loop5 () =
   |> Dataset.log log
   |> Dataset.run "/tmp/" "query_5"
 
+(*
 let loop6 () =
-  let store_count = Sift_kyoto.store id id string_of_int int_of_string "top_word_count_state.kct" in
+  let count = Reducer.map (constant 1) sum in
+  let store_count = kyoto_string_int_store "top_word_count_state.kct" in
   let file = Store.file_view id "top_word_count.txt" in
   let insert wc = Some wc in
   let remove wc = None in
@@ -93,18 +102,16 @@ let loop6 () =
   |> Dataset.reduce_view Reducer.string_reducer
   |> Dataset.persist_view file 
   |> Dataset.run "/tmp/" "query_6"
-
 *)
+
 let main () =
   Lwt_main.run (Lwt.join [
     loop1 ();
     loop2 (); loop2' ();
-(*
     loop3 ();
-*)
     loop4 ();
-(*
     loop5 ();
+(*
     loop6 ();
 *)
   ])
