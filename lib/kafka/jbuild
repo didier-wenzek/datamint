@@ -1,0 +1,6 @@
+(jbuild_version 1)
+
+(library
+ ((name KafkaStore)
+  (public_name datamint.kafka)
+  (libraries (datamint kafka.lwt))))
