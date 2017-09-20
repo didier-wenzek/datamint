@@ -85,7 +85,6 @@ let loop5 () =
   |> Dataset.log log
   |> Dataset.run "/tmp/" "query_5"
 
-(*
 let loop6 () =
   let count = Reducer.map (constant 1) sum in
   let store_count = kyoto_string_int_store "top_word_count_state.kct" in
@@ -97,12 +96,11 @@ let loop6 () =
   |> Dataset.group_updates id id count insert remove
   |> Dataset.persist_state store_count
   |> Dataset.flat_map Bounded.of_option
-  |> Dataset.reduce (Sift_top.reducer fst snd 10)
+  |> Dataset.reduce (Top.reducer fst snd 10)
   |> Dataset.map_view (fun (w,c) -> Format.sprintf "%s: %d\n" w c)
   |> Dataset.reduce_view Reducer.string_reducer
   |> Dataset.persist_view file 
   |> Dataset.run "/tmp/" "query_6"
-*)
 
 let main () =
   Lwt_main.run (Lwt.join [
@@ -111,9 +109,7 @@ let main () =
     loop3 ();
     loop4 ();
     loop5 ();
-(*
     loop6 ();
-*)
   ])
 
 let () =
