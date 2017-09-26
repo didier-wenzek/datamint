@@ -9,6 +9,7 @@ build-test: [
 ]
 depends: [
   "datamint"
+  "str"
   "jbuilder" {build}
   "oUnit"  {test}
 ]   

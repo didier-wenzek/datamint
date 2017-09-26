@@ -3,4 +3,4 @@
 (library
  ((name DataMint)
   (public_name datamint)
-  (libraries (Series lwt))))
+  (libraries (Series Interpreter lwt))))

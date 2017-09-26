@@ -52,7 +52,7 @@ let kyoto_string_int_store =
   let encode_value = string_of_int in
   let decode_value = int_of_string in
   fun file_path ->
-    KyotoStore.KVStore.store ~encode_key ~decode_key ~encode_value ~decode_value ~file_path
+    KyotoCabinet.KVStore.store ~encode_key ~decode_key ~encode_value ~decode_value ~file_path
 
 let loop3 () =
   let open Store in

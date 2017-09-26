@@ -1,5 +1,5 @@
 open Lwt.Infix
-open DataMint.Series
+open Series
 open Util
 
 type kafka_partition = {

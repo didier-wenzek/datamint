@@ -1,4 +1,4 @@
-open DataMint.Series
+open Series
 
 let connect_topic kafka_cluster topic_name =
   let kafka_options = ["metadata.broker.list",kafka_cluster] in

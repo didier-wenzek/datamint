@@ -10,6 +10,12 @@ build-test: [
   ["jbuilder" "runtest" "-j" jobs]
 ]
 depends: [
+  "conf-libev"
+  "lwt"
+  "lambda-term"
+  "yojson"
+  "kyotocabinet"
+  "kafka.lwt"
   "jbuilder" {build}
   "oUnit"  {test}
 ]   

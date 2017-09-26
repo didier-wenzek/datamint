@@ -1,6 +1,6 @@
 (jbuild_version 1)
 
 (library
- ((name KyotoStore)
+ ((name KyotoCabinet)
   (public_name datamint.kyoto)
-  (libraries (datamint kyotocabinet))))
+  (libraries (datamint.series kyotocabinet))))
