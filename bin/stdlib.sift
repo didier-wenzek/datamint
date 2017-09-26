@@ -1,0 +1,133 @@
+# Inverse function composition: argument to the left, function to the right
+!infix_left 0 >>,   (f >> g)(x) = g(f(x))
+
+# Function composition
+!infix_right 0 <<,  (f << g)(x) = f(g(x))
+
+# Inverse function application: argument to the left, function to the right
+!infix_left 0 |>,   x |> f = f(x)
+
+# Function application
+!infix_right 0 <|,  f <| x = f(x)
+
+# Identity function
+id x = x
+curry f a b = f(a,b)
+uncurry f (a,b) = f a b
+constant a x = a
+flip f a b = f b a
+swap (x,y) = (y,x)
+
+pair_with f x = (f x, x)
+dup x = (x,x)
+
+# range
+!infix_left 1 ..   , min..max = range min max
+!infix_left 1 ..<  , n ..< m  = range n (m-1)
+!infix_left 1 <..  , n <.. m  = range (n+1) m
+!infix_left 1 <..< , n <..< m = range (n+1) (m-1)
+
+eq a x = x == a
+gt a x = x > a
+ge a x = x >= a
+lt a x = x < a
+le a x = x <= a
+
+# collection append
+!infix_left 3 &,    (&) = append
+bag_union = monoid [] append
+bag = bag_union |> mapping (x -> [x])
+
+sum = monoid 0 (+)
+product = monoid 1 (*)
+!infix_left 8 **, m ** n = repeat n m |> reduce product
+
+count = sum |> mapping (constant 1)
+count_at_most n = monoid_with_maximum_check 0 (+) (ge n) |> mapping (constant 1)
+at_least n xs = n <= reduce (count_at_most n) xs
+at_most n xs = n >= reduce (count_at_most (n+1)) xs
+
+# FIXME  group k v r = reduce (group_reducer k v r)
+
+and_reducer = monoid_with_maximum true (and) false
+or_reducer = monoid_with_maximum false (or) true
+forall p = map p >> reduce and_reducer
+exists p = map p >> reduce or_reducer
+# c_forall p = c_map p >> c_reduce and_reducer
+# c_exists p = c_map p >> c_reduce or_reducer
+
+# FIXME  set = group_reducer id (x -> true) or_reducer |> project (.keys)
+# FIXME  union x y = reduce set (append x y)
+# FIXME  set_union = monoid [] union
+
+# FIXME partition p = group p id bag
+cross_product xs = unnest (_ -> xs)
+map_cross_product f xs ys = cross_product xs ys |> map ((x,y) -> f x y)
+
+# power_set = map (x -> [[],[x]]) >> reduce (monoid [[]] (map_cross_product union))
+
+remove p = filter (x -> not (p x))
+decorate open close xs = cons open (sonc xs close)
+
+# FIXME  cogroup kx vx ky vy xs ys = seq |> (
+  # FIXME  seq append (
+    # FIXME  xs |> map (x -> (kx x,([vx x],[])))
+    # FIXME  ys |> map (y -> (ky y,([],[vy y])))
+  # FIXME  )
+  # FIXME  group fst snd (product_reducer bag_union bag_union)
+# FIXME  )
+
+# FIXME  co_group rx ry xs ys = seq |> (
+  # FIXME  seq append (
+    # FIXME  xs |> map (x -> (fst x, rx.unit (snd x), ry.zero))
+    # FIXME  ys |> map (y -> (fst y, rx.zero, ry.unit (snd y)))
+  # FIXME  )
+  # FIXME  group fst snd (product_reducer (monoid rx.zero rx.plus) (monoid ry.zero ry.plus))
+# FIXME  )
+
+# Generic
+
+shape = generic (s -> v -> s)
+
+# data formats
+json = { encode = json_encode, decode = json_decode, print = generic json_encode }
+marshal = { encode = marshal_encode, decode = marshal_decode, print = generic marshal_encode }
+
+encoding format shape = {
+  encode = format.encode shape
+  decode = format.decode shape
+}
+
+no_encoding = {
+  encode = id
+  decode = id
+}
+
+# FIXME generic_store encoding = generic_store encoding.encode encoding.decode
+# FIXME kyoto_store key_encoding value_encoding = kyoto_store key_encoding.encode key_encoding.decode value_encoding.encode value_encoding.decode
+
+#generators
+iterate seed next = generator seed (x -> (next x, x))
+integers = generator 0 (n -> (n+1,n))
+series x f = bounded_generator x (y -> dup (f y))
+
+# reducers
+transduce t = transduce t.seed t.step t.term
+
+# FIXME nth_or n d = drop n >> reduce (first_or n)
+
+# kyoto
+kyoto_encoded_as encoding shape path = {
+  keys = (kyoto path).keys 
+  pairs = (kyoto path).pairs |> map ((k,v) -> (encoding shape v |> map (v -> (k,v))))
+  values key = (kyoto path).values key |> flat_map (encoding shape) 
+  pairs_with_prefix prefix = (kyoto path).pairs_with_prefix prefix |> map ((k,v) -> (encoding shape v |> map (v -> (k,v))))
+  pairs_within_range min max = (kyoto path).pairs_within_range min max |> map ((k,v) -> (encoding shape v |> map (v -> (k,v))))
+}
+
+# time windows
+get_tumbling_window w t = (t - w.offset) / w.size
+# FIXME tumbling_window w time = group (x -> get_tumbling_window w (time x)) id
+
+get_sliding_windows w t = 0 .. (w.size / w.slide) |> map (shift -> (get_tumbling_window {size = w.slide, offset = w.offset} t) - shift)
+# FIXME sliding_windows w time red = unnest (x -> get_sliding_windows w (time x)) >> group fst snd red

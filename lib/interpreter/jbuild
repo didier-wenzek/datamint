@@ -1,0 +1,9 @@
+(jbuild_version 1)
+
+(library
+ ((name Interpreter)
+  (public_name datamint.interpreter)
+  (libraries (datamint.series datamint.kyoto yojson lambda-term))))
+
+(ocamllex (lexer))
+(ocamlyacc (parser))

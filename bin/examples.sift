@@ -1,0 +1,79 @@
+# Multiplication tables
+range 0 9 |> map (x -> iterate 10 (add x) 0)
+
+# misc
+fibonacci = generator (1,1) ((n,m) -> ((m,m+n),n))
+reverse = transduce {
+  seed = []
+  step x xs = (cons x xs, [])
+  term xs = xs
+}
+
+# integer root square
+eq_or_succ x y = (y == x) or (y == x + 1)
+step n x = (x + n / x) / 2
+is_done n x = eq_or_succ x (step n x)
+isqrt n = series n (step n) (is_done n) |> reduce (last_or n)
+
+# primes (O(n2))
+primes = integers |> drop 2 |> remove (x -> exists (eq 0) (2 .. (x-1) |> map (y -> x mod y)))
+
+# primes (efficient)
+is_divisor_of n m = n mod m == 0
+has_no_divisor_in ns n = not (exists (is_divisor_of n) ns)
+has_no_divisor_in_asc ns n = has_no_divisor_in (take_while (i -> i*i <= n) ns) n
+is_prime n = has_no_divisor_in_asc (2 .. (isqrt n)) n
+
+primes = integers |> drop 2 |> transduce {
+  seed = []
+  term ns = []
+  step n ns = if_then_else (has_no_divisor_in (take_while (le (isqrt n)) ns) n) (() -> (sonc ns n, [n])) (() -> (ns,[]))
+}
+
+nth_prime n = primes |> drop (n-1) |> reduce (first_or 2) 
+
+# generating numbers
+make_number_of_digits base digits = seq |> (
+  digits
+  transduce { seed = 0, step digit n = (n * base + (digit mod base), []), term n = [n] }
+  reduce (last_or 0)
+)
+
+# church encoding
+two f x = f (f x)
+one f x = f x
+zero f x = x
+succ n f x = f (n f x)
+
+show n = n (x -> x+1) 0
+
+add n m f x = n f (m f x)
+mult n m f x = n (m f) x
+
+is_eq_zero n = n (_ -> false) true
+
+nats = iterate zero succ
+
+
+# continuous query
+from_kafka_partition "localhost" "test" 1 |> c_persist (generic_logger "/tmp/test_foo.log")
+
+seq |> (
+  from_kafka_partition "localhost" "test" 1
+  c_flat_map (json.decode :Int)
+  c_unnest (i -> [i,i*i])
+  c_flat_map (json.encode :(Int,Int))
+  c_persist (generic_logger "/tmp/test_foo.log")
+)
+
+int_as_text = {
+  encode = json.encode :Int >> reduce (first_or "0")
+  decode = json.decode :Int >> reduce (first_or 0)
+}
+
+seq |> (
+  from_kafka_partition "localhost" "test" 1
+  c_flat_map (json.decode :Int)
+  c_reduce sum
+  c_persist (generic_store int_as_text "/tmp/test_sum.log")
+)

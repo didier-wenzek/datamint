@@ -1,0 +1,13 @@
+(jbuild_version 1)
+
+(executables
+ ((names (repl))
+  (package datamint)
+  (public_names (repl))
+  (libraries (datamint))))
+
+(install
+  ((section bin)
+   (package datamint)
+   (files   (stdlib.sift))
+  ))
