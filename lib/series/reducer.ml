@@ -86,8 +86,8 @@ let of_buffer ~init ~push ~term ~full_check =
   }
 
 let string_reducer =
-  let init = (fun () -> Buffer.create 80) in
-  let push = (fun s b -> Buffer.add_string b s; b) in
+  let init () = Buffer.create 80 in
+  let push s b = Buffer.add_string b s; b in
   let term = Buffer.contents in
   let full_check = None in
   of_buffer ~init ~push ~term ~full_check
@@ -115,6 +115,13 @@ let state_adapter seed adapt_push adapt_term full_check r =
     term = adapt_term r.push >> r.term;
     full_check = combine_full_checks full_check r;
   }
+
+let stateful_adapter init adapt_push adapt_term full_check r = 
+  let init () = (init (), r.seed) in
+  let push = adapt_push r.push in
+  let term = adapt_term r.push >> r.term in
+  let full_check = combine_full_checks full_check r in
+  of_buffer ~init ~push ~term ~full_check
 
 let take n r =
   let push x (i,s) = if i < n then (i + 1, r.push x s) else (i,s) in

@@ -18,6 +18,16 @@ let with_return (type t) f =
   let module M = struct exception Return of t end in
   try f (fun x -> raise (M.Return x)) with M.Return x -> x
 
+let with_resource init term config f =
+  let x = init config in
+  try
+    let y = f x in
+    let () = term x in
+    y
+  with e ->
+    let () = term x in
+    raise e
+
 module Option = struct
 
   let none = None
@@ -62,4 +72,13 @@ end
 
 module Either = struct
   type ('a,'b) t = Left of 'a | Right of 'b
+end
+
+module Time = struct
+  let time_ms f x =
+  let t0 = Unix.gettimeofday () in                                                                                                                                                                         
+  let r = f x in
+  let t1 = Unix.gettimeofday () in
+  let d = (t1 -. t0) *. 1000.0 in
+  (int_of_float d,r)    
 end

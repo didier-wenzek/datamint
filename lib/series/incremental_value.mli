@@ -9,10 +9,10 @@ type 'a store =
 type monotonic
 type non_monotonic
 
-(* An incremental value of type [('a,'s) t] represents a continuous computation
+(* An incremental value of type [('k,'a,'s) t] represents a continuous computation
    producing an unbounded series of value of type ['a] using a state of type ['s].
 
-   An incremental value is either an unbounded series
+   An incremental value is either an unbounded series 
    or the result of a fold operation over an unbounded series (i.e. a monoid morphism).
 *)
 type ('k,'a,'s) t =

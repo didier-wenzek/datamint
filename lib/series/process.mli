@@ -1,3 +1,7 @@
+type t
+val wait_processes: unit -> unit Lwt.t                                                                                                                                                                     
+val register_process: unit Lwt.t -> t
+
 val is_interrupted: unit -> bool
 
 type 'a step = Done of 'a | Continue of 'a | Interrupted of 'a

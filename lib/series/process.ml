@@ -1,5 +1,15 @@
 open Lwt.Infix
 
+type t = unit Lwt.t
+
+let running_processes : unit Lwt.t list ref = ref []
+
+let wait_processes () = Lwt.join !running_processes
+
+let register_process p =
+  running_processes := p :: !running_processes;
+  p
+
 let interrupted = ref false
 
 let signals = [ 2; 15 ]
