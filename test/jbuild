@@ -2,7 +2,7 @@
 
 (executables
  ((names (tests))
-  (libraries (oUnit datamint.series))))
+  (libraries (oUnit datamint.series datamint.interpreter str))))
 
 (alias
  ((name    runtest)

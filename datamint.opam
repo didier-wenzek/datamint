@@ -18,4 +18,5 @@ depends: [
   "kafka.lwt"
   "jbuilder" {build}
   "oUnit"  {test}
+  "str"  {test}
 ]   
