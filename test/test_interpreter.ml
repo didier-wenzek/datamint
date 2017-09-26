@@ -184,6 +184,8 @@ let suite =
   test_eval "drop_while (x -> x < 8) (range 1 10)"                                  [ "[8, 9, 10]" ];
   test_eval "unique [1,2,2,3,2,1,3]"                                                [ "[1, 2, 3]" ];
   test_eval "dedupe [1,2,2,3,2,1,3]"                                                [ "[1, 2, 3, 2, 1, 3]" ];
+  test_eval "dedupe []"                                                             [ "[]" ];
+  test_eval "dedupe [1,2,3,2,1]"                                                    [ "[1, 2, 3, 2, 1]" ];
   test_eval "interpose 0 [1,2,3]"                                                   [ "[1, 0, 2, 0, 3]" ];
   test_eval "\"a\" ++ \"b\" ++ \"c\""                                               [ "\"abc\"" ];
   test_eval "\"éàç\""                                                               [ "\"éàç\"" ];
