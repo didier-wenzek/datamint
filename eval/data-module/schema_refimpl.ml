@@ -5,6 +5,7 @@ module type S = sig
 
   type 'a dataset
 
+  val collection_of_dataset: 'a dataset -> 'a collection
   val collection_of_list: 'a list -> 'a collection
   val relation_of_function: ('a -> 'b) -> ('a,'b) relation
   val relation_of_plural_function: ('a -> 'b dataset) -> ('a,'b) relation

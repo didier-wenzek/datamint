@@ -20,6 +20,9 @@ module type S = sig
 
   val of_list: 'a list -> 'a t
 
+  val empty_mapping: unit -> ('a,'b) mapping
+  val pairs: ('a,'b) mapping -> ('a*'b) t
   val keys: ('a,'b) mapping -> 'a t
-  val values: ('a,'b) mapping -> 'a -> 'b t
+  val values: ('a,'b) mapping -> 'b t
+  val key_values: ('a,'b) mapping -> 'a -> 'b t
 end

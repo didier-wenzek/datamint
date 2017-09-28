@@ -36,8 +36,11 @@ module Bag : Dataset.S
   let of_list xs = xs
 
   type ('a,'b) mapping = ('a,'b) Hashtbl.t
-  let keys m = Hashtbl.fold (fun k v acc -> k::acc) m []
-  let values = Hashtbl.find_all
+  let empty_mapping () = Hashtbl.create 1024
+  let pairs m = Hashtbl.fold (fun k v acc -> (k,v)::acc) m []
+  let keys m = Hashtbl.fold (fun k _ acc -> k::acc) m []
+  let values m = Hashtbl.fold (fun _ v acc -> v::acc) m []
+  let key_values = Hashtbl.find_all
   
 end
 
