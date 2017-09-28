@@ -1,6 +1,18 @@
 open Util
 
-module Make(Dataset: Dataset.S) : Schema.S = struct
+module type S = sig
+  include Schema.S
+
+  type 'a dataset
+
+  val collection_of_list: 'a list -> 'a collection
+  val relation_of_function: ('a -> 'b) -> ('a,'b) relation
+  val relation_of_plural_function: ('a -> 'b dataset) -> ('a,'b) relation
+end
+
+module Make(Dataset: Dataset.S): S
+  with type 'a dataset = 'a Dataset.t
+= struct
   type 'a dataset = 'a Dataset.t
 
   type ('a,'b) relation = {
@@ -118,4 +130,25 @@ module Make(Dataset: Dataset.S) : Schema.S = struct
         )
     );
   }
+
+  let relation_of_function f = {
+    rel with
+    map = Some (fun x -> Dataset.singleton (f x));
+    chk = Some (fun x y -> f x = y);
+  }
+
+  let relation_of_plural_function f = {
+    rel with
+    map = Some f;
+    chk = Some (fun x y -> Dataset.exists ((=) y) (f x));
+  }
+
+  let collection_of_dataset xs = {
+    rel with
+    gen = Some (fun make_pair -> Dataset.map (make_pair ()) xs);
+    map = Some (fun () -> xs);
+  }
+
+  let collection_of_list xs =
+    collection_of_dataset (Dataset.of_list xs)
 end

@@ -32,5 +32,12 @@ module Bag : Dataset.S
   let aggregate init push merge =
     let add acc x = push x acc in
     fun xs -> List.fold_left add (init ()) xs
+
+  let of_list xs = xs
+
+  type ('a,'b) mapping = ('a,'b) Hashtbl.t
+  let keys m = Hashtbl.fold (fun k v acc -> k::acc) m []
+  let values = Hashtbl.find_all
+  
 end
 

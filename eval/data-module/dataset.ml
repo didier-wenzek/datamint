@@ -1,5 +1,6 @@
 module type S = sig
   type 'a t
+  type ('a,'b) mapping
 
   val empty: 'a t
   val singleton: 'a -> 'a t
@@ -16,4 +17,9 @@ module type S = sig
 
   val fold: 'b -> ('a -> 'b) -> ('b -> 'b -> 'b) -> 'a t -> 'b
   val aggregate: (unit -> 'b) -> ('a -> 'b -> 'b) -> ('b -> 'b -> 'b) -> 'a t -> 'b
+
+  val of_list: 'a list -> 'a t
+
+  val keys: ('a,'b) mapping -> 'a t
+  val values: ('a,'b) mapping -> 'a -> 'b t
 end

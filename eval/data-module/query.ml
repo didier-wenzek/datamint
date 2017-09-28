@@ -1,6 +1,7 @@
 module type S = sig
-  include Schema.S
-
+  type ('a,'b) relation
+  type 'a collection
+  
   type ('a,'b) var
 
   val var1 : unit -> ('a,'a) var

@@ -1,5 +1,5 @@
 module type S = sig
-  include Query.S
+  include Schema.S
 
   type author
   type post

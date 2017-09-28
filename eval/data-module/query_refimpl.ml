@@ -38,9 +38,14 @@ module Var = struct
   let var4 () = (var nth1_4, var nth2_4, var nth3_4, var nth4_4)
 end
 
-module Make(Schema: Schema.S) : Query.S = struct
-  include Schema
+module Make(Schema: Schema.S): Query.S
+  with type ('a,'b) relation = ('a,'b) Schema.relation
+  and  type 'a collection = 'a Schema.collection
+= struct
   include Var
+
+  type ('a,'b) relation = ('a,'b) Schema.relation
+  type 'a collection = 'a Schema.collection
 
   type 'a clause =
     | Clause: (('a,'c) var * ('a,'b) relation * ('b,'c) var) -> 'c clause

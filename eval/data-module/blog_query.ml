@@ -1,5 +1,7 @@
 module Compile(Schema: Blog_schema.S) = struct
   open Schema
+  module Q = Query_refimpl.Make(Schema)
+  open Q
 
   module Author = struct
     include Schema.Author
