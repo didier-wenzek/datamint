@@ -4,6 +4,7 @@ module type S = sig
   type author
   type post
   type comment
+  type uuid = string
   type tag = string
   type date = int
 
@@ -12,10 +13,12 @@ module type S = sig
   val comments: comment collection
 
   module Author : sig
+    val uuid: (author,uuid) relation
     val name: (author,string) relation
   end
 
   module Post : sig
+    val uuid: (post,uuid) relation
     val author: (post,author) relation
     val date: (post,date) relation
     val title: (post,string) relation
@@ -24,6 +27,7 @@ module type S = sig
   end
 
   module Comment : sig
+    val uuid: (comment,uuid) relation
     val author: (comment,author) relation
     val date: (comment,date) relation
     val post: (comment,post) relation
