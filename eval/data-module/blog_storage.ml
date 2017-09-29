@@ -44,33 +44,37 @@ module Open(DB: DB) : Blog_schema.S = struct
   let posts = DB.posts |> Bag.values |> collection_of_dataset
   let comments = DB.comments |> Bag.values |> collection_of_dataset
 
+  let author_of_uuid = relation_of_mapping_with_inv DB.authors (fun a -> a.uuid)
+  let post_of_uuid = relation_of_mapping_with_inv DB.posts (fun p -> p.uuid)
+  let comment_of_uuid = relation_of_mapping_with_inv DB.comments (fun c -> c.uuid)
+
   module Author = struct
     open DB.Author
-    let uuid = relation_of_function (fun a -> a.uuid)
+    let uuid = inverse author_of_uuid
     let name = relation_of_function (fun a -> a.name)
   end
 
   module Post = struct
     open DB.Post
-    let uuid = relation_of_function (fun p -> p.uuid)
+    let uuid = inverse post_of_uuid
     let author_uuid = relation_of_function (fun p -> p.author_uuid)
     let date = relation_of_function (fun p -> p.date)
     let title = relation_of_function (fun p -> p.title)
     let tags = relation_of_plural_function (fun p -> p.tags)
     let content = relation_of_function (fun p -> p.content)
 
-    let author = author_uuid <=> (inverse Author.uuid)
+    let author = author_uuid <=> author_of_uuid
   end
 
   module Comment = struct
     open DB.Comment
-    let uuid = relation_of_function (fun c -> c.uuid)
+    let uuid = inverse comment_of_uuid
     let author_uuid = relation_of_function (fun c -> c.author_uuid)
     let date = relation_of_function (fun c -> c.date)
     let post_uuid = relation_of_function (fun c -> c.post_uuid)
     let content = relation_of_function (fun c -> c.content)
 
-    let author = author_uuid <=> (inverse Author.uuid)
-    let post = post_uuid <=> (inverse Post.uuid)
+    let author = author_uuid <=> author_of_uuid
+    let post = post_uuid <=> post_of_uuid
   end
 end

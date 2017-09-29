@@ -4,17 +4,22 @@ module type S = sig
   include Schema.S
 
   type 'a dataset
+  type ('a,'b) mapping
 
   val collection_of_dataset: 'a dataset -> 'a collection
   val collection_of_list: 'a list -> 'a collection
   val relation_of_function: ('a -> 'b) -> ('a,'b) relation
   val relation_of_plural_function: ('a -> 'b dataset) -> ('a,'b) relation
+  val relation_of_mapping: ('a,'b) mapping -> ('a,'b) relation
+  val relation_of_mapping_with_inv: ('a,'b) mapping -> ('b -> 'a) -> ('a,'b) relation
 end
 
 module Make(Dataset: Dataset.S): S
   with type 'a dataset = 'a Dataset.t
+  and  type ('a,'b) mapping = ('a,'b) Dataset.mapping
 = struct
   type 'a dataset = 'a Dataset.t
+  type ('a,'b) mapping = ('a,'b) Dataset.mapping
 
   type ('a,'b) relation = {
     gen: 'c. (('a -> 'b -> 'c) -> 'c dataset) option;
@@ -152,4 +157,18 @@ module Make(Dataset: Dataset.S): S
 
   let collection_of_list xs =
     collection_of_dataset (Dataset.of_list xs)
+
+  let relation_of_mapping m = {
+    rel with
+    gen = Some (fun make_pair -> Dataset.map (fun (k,v) -> make_pair k v) (Dataset.pairs m));
+    map = Some (Dataset.key_values m);
+    chk = Some (fun x y -> Dataset.exists ((=) y) (Dataset.key_values m x));
+  }
+
+  let relation_of_mapping_with_inv m f =
+    let rel = relation_of_mapping m in {
+      rel with
+      inv = Some (fun x -> Dataset.singleton (f x))
+    }
+
 end
