@@ -36,6 +36,17 @@ module Var = struct
   let nth3_4 (x1,x2,x3,x4) = x3
   let nth4_4 (x1,x2,x3,x4) = x4
   let var4 () = (var nth1_4, var nth2_4, var nth3_4, var nth4_4)
+
+  let here (x,y) = x
+  let next f (x,y) = f y
+
+  let var5 () =
+    let x1 = here in
+    let x2 = next here in
+    let x3 = next (next here) in
+    let x4 = next (next (next here)) in
+    let x5 = next (next (next (next here))) in
+    (var x1, var x2, var x3, var x4, var x5)
 end
 
 module Make(Schema: Schema.S): Query.S

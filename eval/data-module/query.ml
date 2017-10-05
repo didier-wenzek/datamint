@@ -8,6 +8,13 @@ module type S = sig
   val var2 : unit -> ('a,'a*'b) var * ('b,'a*'b) var
   val var3 : unit -> ('a,'a*'b*'c) var * ('b,'a*'b*'c) var * ('c,'a*'b*'c) var
   val var4 : unit -> ('a,'a*'b*'c*'d) var * ('b,'a*'b*'c*'d) var * ('c,'a*'b*'c*'d) var * ('d,'a*'b*'c*'d) var
+  val var5 : unit ->
+           ('a, 'a * ('b * ('c * ('d * ('e * 'f))))) var *
+           ('b, 'a * ('b * ('c * ('d * ('e * 'f))))) var *
+           ('c, 'a * ('b * ('c * ('d * ('e * 'f))))) var *
+           ('d, 'a * ('b * ('c * ('d * ('e * 'f))))) var *
+           ('e, 'a * ('b * ('c * ('d * ('e * 'f))))) var
+
   val __ : ('a,'b) var
   val value: 'a -> ('a,'b) var
 
