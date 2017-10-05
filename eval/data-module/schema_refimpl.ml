@@ -17,6 +17,7 @@ end
 module Make(Dataset: Dataset.S): S
   with type 'a dataset = 'a Dataset.t
   and  type ('a,'b) mapping = ('a,'b) Dataset.mapping
+  and  type 'a value = 'a Dataset.t
 = struct
   type 'a dataset = 'a Dataset.t
   type ('a,'b) mapping = ('a,'b) Dataset.mapping

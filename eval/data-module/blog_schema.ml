@@ -1,12 +1,13 @@
+type uuid = string
+type tag = string
+type date = int
+
 module type S = sig
   include Schema.S
 
   type author
   type post
   type comment
-  type uuid = string
-  type tag = string
-  type date = int
 
   val authors: author collection
   val posts: post collection

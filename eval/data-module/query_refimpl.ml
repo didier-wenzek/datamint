@@ -52,11 +52,13 @@ end
 module Make(Schema: Schema.S): Query.S
   with type ('a,'b) relation = ('a,'b) Schema.relation
   and  type 'a collection = 'a Schema.collection
+  and  type 'a result = 'a Schema.value
 = struct
   include Var
 
   type ('a,'b) relation = ('a,'b) Schema.relation
   type 'a collection = 'a Schema.collection
+  type 'a result = 'a Schema.value
 
   type 'a clause =
     | Clause: (('a,'c) var * ('a,'b) relation * ('b,'c) var) -> 'c clause
@@ -66,5 +68,7 @@ module Make(Schema: Schema.S): Query.S
   let query q = q
 
   let (!!) x rel y = Clause (x,rel,y)
+
+  let run q = raise (Invalid_argument "Not implemented")
 end
 

@@ -1,6 +1,7 @@
 (jbuild_version 1)
 
-(library
- ((name DataModule)
-  (public_name datamint.eval)
+(executable
+ ((name blog_author_posts)
+  (public_name blog_author_posts)
+  (package datamint-eval)
   (libraries ())))

@@ -1,6 +1,7 @@
 module type S = sig
   type ('a,'b) relation
   type 'a collection
+  type 'a value
 
   val eq: ('a,'a) relation
   val ne: ('a,'a) relation
@@ -14,7 +15,6 @@ module type S = sig
   val rel_of_col: 'a collection -> (unit,'a) relation
   val col_of_rel: (unit,'a) relation -> 'a collection
 
-  type 'a value
   type ('a,'b) extractor
   type ('a,'b,'c) injector
 

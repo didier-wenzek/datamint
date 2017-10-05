@@ -1,7 +1,10 @@
 module type S = sig
   type ('a,'b) relation
   type 'a collection
-  
+  type 'a result
+
+  type 'a clause
+  type 'a query
   type ('a,'b) var
 
   val var1 : unit -> ('a,'a) var
@@ -18,9 +21,7 @@ module type S = sig
   val __ : ('a,'b) var
   val value: 'a -> ('a,'b) var
 
-  type 'a clause
-  type 'a query
-
   val (!!): ('a,'c) var -> ('a,'b) relation -> ('b,'c) var -> 'c clause
   val query: 'a clause list -> 'a query
+  val run: 'a query -> 'a result
 end

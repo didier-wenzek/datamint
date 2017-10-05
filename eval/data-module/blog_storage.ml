@@ -1,12 +1,12 @@
+module Bag = Dataset_refimpl.Bag
+type 'a bag = 'a Bag.t
+type ('a,'b) index = ('a,'b) Bag.mapping
+
+type uuid = string
+type tag = string
+type date = int
+
 module DB_repr = struct
-  module Bag = Dataset_refimpl.Bag
-  type 'a bag = 'a Bag.t
-  type ('a,'b) index = ('a,'b) Bag.mapping
-
-  type uuid = string
-  type tag = string
-  type date = int
-
   module Author = struct
     type row =  { uuid: uuid; name: string }
   end
@@ -28,17 +28,22 @@ module type DB = sig
   val posts: (uuid, Post.row) index
 end
 
-module Open(DB: DB) : Blog_schema.S = struct
+module EmptyDB : DB = struct
+  include DB_repr
 
-  module Bag = DB.Bag
+  let authors = Bag.empty_mapping ()
+  let posts = Bag.empty_mapping ()
+  let comments = Bag.empty_mapping ()
+end
+
+module Open(DB: DB) : Blog_schema.S
+  with type 'a value = 'a Bag.t
+= struct
   include Schema_refimpl.Make(Bag)
 
   type author = DB.Author.row
   type post = DB.Post.row
   type comment = DB.Comment.row
-  type uuid = string
-  type tag = string
-  type date = int
 
   let authors = DB.authors |> Bag.values |> collection_of_dataset
   let posts = DB.posts |> Bag.values |> collection_of_dataset

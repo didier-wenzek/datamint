@@ -1,7 +1,6 @@
 module Compile(Schema: Blog_schema.S) = struct
   open Schema
-  module Q = Query_refimpl.Make(Schema)
-  open Q
+  include Query_refimpl.Make(Schema)
 
   module Author = struct
     include Schema.Author
@@ -13,6 +12,15 @@ module Compile(Schema: Blog_schema.S) = struct
     include Schema.Post
     let comments = inverse Comment.post
   end
+
+  let posts_of_author name =
+    let post, uuid, title, date = var4 () in
+    query [
+      !! post (Post.author <=> Author.name) (value name);
+      !! post Post.uuid uuid;
+      !! post Post.title title;
+      !! post Post.date date;
+    ]
 
   let posts_of_tag tag =
     let post, title, author, date = var4 () in
