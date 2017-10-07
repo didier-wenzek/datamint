@@ -15,8 +15,8 @@ module type S = sig
   val rel_of_col: 'a collection -> (unit,'a) relation
   val col_of_rel: (unit,'a) relation -> 'a collection
 
-  type ('a,'b) extractor
-  type ('a,'b,'c) injector
+  type ('a,'b) extractor = 'a -> 'b
+  type ('a,'b,'c) injector = 'a -> 'b -> 'c
 
   val unit_value: unit value
 
