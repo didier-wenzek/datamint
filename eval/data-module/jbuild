@@ -1,7 +1,7 @@
 (jbuild_version 1)
 
-(executable
- ((name blog_author_posts)
-  (public_name blog_author_posts)
+(executables
+ ((names (blog_author_posts capability))
+  (public_names (blog_author_posts capability))
   (package datamint-eval)
   (libraries ())))
