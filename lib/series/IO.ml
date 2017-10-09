@@ -87,10 +87,10 @@ let iter_chunk char push chunk =
   in
   loop 0
 
-let file_lines path =
+let file_split char path =
   let init () = Buffer.create 1024 in
   let adapt push_line chunk (left_over, acc) =
-    match split_first_last '\n' chunk with
+    match split_first_last char chunk with
     | NoSplit chunk ->
       let () = Buffer.add_string left_over chunk in
       (left_over, acc)
@@ -107,7 +107,7 @@ let file_lines path =
       let () = Buffer.clear left_over in
       let () = Buffer.add_string left_over tail in
       let acc = push_line head acc in
-      let acc = iter_chunk '\n' push_line middle acc in
+      let acc = iter_chunk char push_line middle acc in
       (left_over, acc)
   in
   let term push (left_over, state) =
@@ -118,3 +118,6 @@ let file_lines path =
     stateful_adapter init adapt term None r
   ) in
   Bounded.{ iter = fun r -> iter_and_term (pack_chunks { r with Reducer.term = id } ()) (file_chunks (8*1024) path) }
+
+let file_lines = file_split '\n'
+let file_words = file_split ' '

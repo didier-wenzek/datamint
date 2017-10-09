@@ -33,6 +33,12 @@ ge a x = x >= a
 lt a x = x < a
 le a x = x <= a
 
+# string
+
+string_words = string_extract "[a-zA-Z]+"
+file_words = file_lines >> flat_map string_words
+
+
 # collection append
 !infix_left 3 &,    (&) = append
 bag_union = monoid [] append

@@ -216,6 +216,11 @@ let suite =
   test_eval "r = { compose = f -> g -> x -> g(f(x)), id(x) = x }, r.id 4"           [ "r : forall a, b, c, d. { compose:(a -> b) -> (b -> c) -> a -> c, id:d -> d }"; "4" ];
   test_eval "unique []"                                                             [ "[]" ];
   test_eval "e = unique [], e"                                                      [ "e = []"; "[]" ];
+  test_eval "string_split \",\" \"a,b,c\""                                          [ "[\"a\", \"b\", \"c\"]" ];
+  test_eval "string_split \",\" \"a,,,c\""                                          [ "[\"a\", \"\", \"\", \"c\"]" ];
+  test_eval "string_split \",+\" \"a,,,c\""                                         [ "[\"a\", \"c\"]" ];
+  test_eval "string_extract \"[a-z]\" \"a,b,c\""                                    [ "[\"a\", \"b\", \"c\"]" ];
+  test_eval "string_extract \"[a-z]\" \"   a,  b, c\""                              [ "[\"a\", \"b\", \"c\"]" ];
   test_eval "[]"                                                                    [ "[]" ];
   test_eval "() -> 2"                                                               [ "() -> Int" ];
   test_eval "(() -> 1) ()"                                                          [ "1" ];

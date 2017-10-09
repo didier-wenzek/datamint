@@ -45,6 +45,16 @@ end = struct
     let op_sig = Type_witness.(FunSig(string_sig, FunSig(string_sig,string_sig))) in
     (op_type, Type_witness.MonoDyn (op_sig, op))
 
+  let string_split =
+    let op_type = poly_t 0 (fun_t string_t (fun_t string_t (Type.GeneratorType string_t))) in
+    let op_sig = Type_witness.(FunSig(string_sig, FunSig(string_sig, GeneratorSig string_sig))) in
+    (op_type, Type_witness.MonoDyn (op_sig, Series.RE.split))
+
+  let string_extract =
+    let op_type = poly_t 0 (fun_t string_t (fun_t string_t (Type.GeneratorType string_t))) in
+    let op_sig = Type_witness.(FunSig(string_sig, FunSig(string_sig, GeneratorSig string_sig))) in
+    (op_type, Type_witness.MonoDyn (op_sig, Series.RE.extract))
+
   let files =
     let op_type = poly_t 0 (fun_t string_t (Type.GeneratorType string_t)) in
     let op_sig = Type_witness.(FunSig(string_sig, GeneratorSig string_sig)) in
@@ -55,10 +65,10 @@ end = struct
     let op_sig = Type_witness.(FunSig(string_sig, GeneratorSig string_sig)) in
     (op_type, Type_witness.MonoDyn (op_sig, Series.IO.file_chunks 1024))
 
-  let file_lines =
+  let file_split char =
     let op_type = poly_t 0 (fun_t string_t (Type.GeneratorType string_t)) in
     let op_sig = Type_witness.(FunSig(string_sig, GeneratorSig string_sig)) in
-    (op_type, Type_witness.MonoDyn (op_sig, Series.IO.file_lines))
+    (op_type, Type_witness.MonoDyn (op_sig, Series.IO.file_split char))
 
   let kyoto_pairs =
     let op_type = poly_t 0 Type.(fun_t string_t (GeneratorType (PairType (string_t,string_t)))) in
@@ -137,9 +147,11 @@ end = struct
 
   let initial_env = initial_env
     |> define "++" (string_operator (^))
+    |> define "string_split" string_split
+    |> define "string_extract" string_extract
     |> define "files" files
     |> define "file_chunks" file_chunks
-    |> define "file_lines" file_lines
+    |> define "file_lines" (file_split '\n')
     |> define "kyoto" kyoto
     |> define "json_decode" json_decoder
     |> define "json_encode" json_encoder
