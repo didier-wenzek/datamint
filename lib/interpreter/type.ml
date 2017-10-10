@@ -14,6 +14,7 @@ type 'var type_expr =
                                                    and picking one of the options to forge some t value. *)
   | GeneratorType of 'var type_expr
   | ReducerType of 'var type_expr * 'var type_expr * 'var type_expr
+  | MappingType of 'var type_expr * 'var type_expr
   | ShapeType of 'var type_expr
 
 type 'var type_constraint =
@@ -118,6 +119,7 @@ let type_vars_expr push =
     | RecordType (t1,_,t2)
     | CaseType (t1,t2)
     | SumType (t1,t2)
+    | MappingType (t1,t2)
     -> loop (loop vars t1) t2
 
     | ReducerType (t1,t2,t3)
@@ -152,6 +154,7 @@ let show_expr constraints show_var =
     | SumType (options, t) -> show_options options
     | GeneratorType a -> "["^(show a)^"]"
     | ReducerType (a,b,c) -> "Reducer("^(show a)^", "^(show b)^", "^(show c)^")"
+    | MappingType (a,b) -> "{" ^ (show a)^" -> "^(show b) ^ "}"
     | ShapeType a -> "Shape("^(show a)^")"
   and show_tuple a = function
     | PairType (b,c) -> (show a)^", "^(show_tuple b c)
@@ -249,6 +252,10 @@ let rewrite_type_expr rewrite_var =
       let t2 = loop t2 in
       let t3 = loop t3 in
       ReducerType (t1, t2, t3)
+    | MappingType (t1,t2) ->
+      let t1 = loop t1 in
+      let t2 = loop t2 in
+      MappingType (t1, t2)
     | ShapeType t ->
       let t = loop t in
       ShapeType t
@@ -361,6 +368,7 @@ let check_no_cycle x =
     | RecordType (t1,_,t2)
     | CaseType (t1,t2)
     | SumType (t1,t2)
+    | MappingType (t1,t2)
     -> occurs_in_type t1 || occurs_in_type t2
     | GeneratorType t
     | ShapeType t
@@ -437,6 +445,9 @@ and unify_types t1 t2 = match t1,t2 with
 
   | ReducerType (a1,b1,c1), ReducerType (a2, b2, c2)
   -> unify a1 a2; unify b1 b2; unify c1 c2
+
+  | MappingType (a1,b1), MappingType (a2, b2)
+  -> unify a1 a2; unify b1 b2
 
   | ShapeType a1, ShapeType a2
   -> unify a1 a2
@@ -522,6 +533,7 @@ let rec is_data = function
 
   | PairType (t1, t2)
   | RecordType (t2,_,t1)
+  | MappingType (t1, t2)
   -> is_data t1 && is_data t2
 
 let is_abstract t = not (is_data t.type_expr)

@@ -1,10 +1,7 @@
 type 'a producer = 'a Bounded.producer 
 type ('a,'b,'c) reducer = ('a,'b,'c) Reducer.t
 
-(* The type of mapping from a key to a singular optional value *)
-type ('k,'v) t
-
-(* Atomic mapping update. *)
+(* Atomic update of a mapping. *)
 type ('k,'v) update =
   | Replace of 'k*'v
   | Remove of 'k
@@ -16,6 +13,24 @@ type ('k,'v) source = {
   value: 'k -> 'v option;
   update: ('k,'v) update producer -> ('k,'v) source;
 }
+
+(* A mapping under construction *)
+type ('k,'v) base = {
+  source: ('k,'v) source;
+  replaced: ('k,'v) Hashtbl.t;
+  removed: ('k,unit) Hashtbl.t;
+}
+
+(* The projection of a mapping *)
+type ('k,'v,'w) view = {
+  base: ('k,'v) base;
+  project: 'v -> 'w;
+}
+
+(* The type of mapping from a key to a singular optional value *)
+type ('k,'v) t =
+  | Base: ('k,'v) base -> ('k,'v) t
+  | View: ('k,'v,'w) view -> ('k,'w) t
 
 val new_empty: unit -> ('k,'v) t
 val of_source: ('k,'v) source -> ('k,'v) t

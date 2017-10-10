@@ -1,5 +1,6 @@
 module Bounded = Series.Bounded
 module Reducer = Series.Reducer
+module Mapping = Series.Mapping
 
 type 'a impl = {
   to_string: 'a -> string;
@@ -18,6 +19,7 @@ type _ t =
   | RecordSig: 'a t * string * 'b t -> ('b * 'a) t
   | GeneratorSig: 'a t -> 'a Bounded.producer t
   | ReducerSig: 'a t * 'b t * 'c t -> ('a,'b,'c) Reducer.t t
+  | MappingSig: 'a t * 'b t -> ('a,'b) Mapping.t t
   | ShapeSig: 'a t -> 'a Generics.Repr.t t
   | VoidSig: void t
 

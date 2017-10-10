@@ -1,5 +1,6 @@
 module Bounded = Series.Bounded
 module Reducer = Series.Reducer
+module Mapping = Series.Mapping
 module Generics = Generics.Repr
 
 open Series.Util
@@ -20,6 +21,7 @@ type _ t =
   | RecordSig: 'a t * string * 'b t -> ('b * 'a) t
   | GeneratorSig: 'a t -> 'a Bounded.producer t
   | ReducerSig: 'a t * 'b t * 'c t -> ('a,'b,'c) Reducer.t t
+  | MappingSig: 'a t * 'b t -> ('a,'b) Mapping.t t
   | ShapeSig: 'a t -> 'a Generics.t t
   | VoidSig: void t
 
@@ -121,6 +123,13 @@ let rec gen_val_of_sig: type a. a t -> a Generics.t option
     >|= fun a_repr ->
     Generics.list a_repr
   )
+  | MappingSig (k,v) -> Option.(
+    gen_val_of_sig k
+    >>= fun k_repr ->
+    gen_val_of_sig v
+    >|= fun v_repr ->
+    Generics.mapping k_repr v_repr
+  )
   | FunSig (_,_) -> None
   | ReducerSig (_,_,_) -> None
   | ShapeSig _ -> None
@@ -164,6 +173,11 @@ let rec eq_type : type a b. a t -> b t -> (a,b) eq option =
     | Some Eq, Some Eq, Some Eq -> Some Eq
     | _ -> None
   )
+  | MappingSig(a1,b1), MappingSig(a2,b2) -> (
+    match eq_type a1 a2, eq_type b1 b2 with
+    | Some Eq, Some Eq -> Some Eq
+    | _ -> None
+  )
   | ShapeSig a1, ShapeSig a2 -> (
     match eq_type a1 a2 with
     | Some Eq -> Some Eq
@@ -181,6 +195,7 @@ let rec show: type a. a t -> string = function
   | RecordSig(a,p,b) -> Format.sprintf "%s with {%s:%s}" (show a) p (show b) 
   | GeneratorSig a -> Format.sprintf "[%s]" (show a) 
   | ReducerSig(a,b,c) -> Format.sprintf "Reducer(%s, %s, %s)" (show a) (show b) (show c)
+  | MappingSig(a,b) -> Format.sprintf "{%s->%s}" (show a) (show b) 
   | ShapeSig(a) -> Format.sprintf ": %s" (show a)
 
 let top = fst
@@ -250,6 +265,11 @@ let rec eval_type env = function
     let Sig c_t = eval_type env c in
     Sig (ReducerSig(a_t, b_t, c_t))
 
+  | Type.MappingType (a,b) ->
+    let Sig a_t = eval_type env a in
+    let Sig b_t = eval_type env b in
+    Sig (MappingSig(a_t, b_t))
+
   | Type.ShapeType a ->
     let Sig a_t = eval_type env a in
     Sig (ShapeSig a_t)
@@ -300,6 +320,7 @@ let rec show_dyn: type a. Type.polytyp -> a t -> a show  =
       (* A GeneratorSig can only be the implementation of a GeneratorType. *)
       assert false
   )
+  | MappingSig(_,_) -> Show (fun _ -> "<mapping>") (* FIXME *)
   | PairSig (a_sig, b_sig) -> (
     match x_t.Type.type_expr with
     | Type.PairType (a_t, b_t) ->

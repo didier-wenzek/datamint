@@ -53,7 +53,7 @@ count_at_most n = monoid_with_maximum_check 0 (+) (ge n) |> mapping (constant 1)
 at_least n xs = n <= reduce (count_at_most n) xs
 at_most n xs = n >= reduce (count_at_most (n+1)) xs
 
-# FIXME  group k v r = reduce (group_reducer k v r)
+group k v r = reduce (group_reducer k v r)
 
 and_reducer = monoid_with_maximum true (and) false
 or_reducer = monoid_with_maximum false (or) true
@@ -62,34 +62,34 @@ exists p = map p >> reduce or_reducer
 # c_forall p = c_map p >> c_reduce and_reducer
 # c_exists p = c_map p >> c_reduce or_reducer
 
-# FIXME  set = group_reducer id (x -> true) or_reducer |> project (.keys)
-# FIXME  union x y = reduce set (append x y)
-# FIXME  set_union = monoid [] union
+set = group_reducer id (x -> true) or_reducer |> project keys
+union x y = reduce set (append x y)
+set_union = monoid [] union
 
-# FIXME partition p = group p id bag
+partition p = group p id bag
 cross_product xs = unnest (_ -> xs)
 map_cross_product f xs ys = cross_product xs ys |> map ((x,y) -> f x y)
 
-# power_set = map (x -> [[],[x]]) >> reduce (monoid [[]] (map_cross_product union))
+power_set = map (x -> [[],[x]]) >> reduce (monoid [[]] (map_cross_product union))
 
 remove p = filter (x -> not (p x))
 decorate open close xs = cons open (sonc xs close)
 
-# FIXME  cogroup kx vx ky vy xs ys = seq |> (
-  # FIXME  seq append (
-    # FIXME  xs |> map (x -> (kx x,([vx x],[])))
-    # FIXME  ys |> map (y -> (ky y,([],[vy y])))
-  # FIXME  )
-  # FIXME  group fst snd (product_reducer bag_union bag_union)
-# FIXME  )
+cogroup kx vx ky vy xs ys = seq |> (
+  seq append (
+    xs |> map (x -> (kx x,([vx x],[])))
+    ys |> map (y -> (ky y,([],[vy y])))
+  )
+  group fst snd (product_reducer bag_union bag_union)
+)
 
-# FIXME  co_group rx ry xs ys = seq |> (
-  # FIXME  seq append (
-    # FIXME  xs |> map (x -> (fst x, rx.unit (snd x), ry.zero))
-    # FIXME  ys |> map (y -> (fst y, rx.zero, ry.unit (snd y)))
-  # FIXME  )
-  # FIXME  group fst snd (product_reducer (monoid rx.zero rx.plus) (monoid ry.zero ry.plus))
-# FIXME  )
+co_group rx ry xs ys = seq |> (
+  seq append (
+    xs |> map (x -> (fst x, rx.unit (snd x), ry.zero))
+    ys |> map (y -> (fst y, rx.zero, ry.unit (snd y)))
+  )
+  group fst snd (product_reducer (monoid rx.zero rx.plus) (monoid ry.zero ry.plus))
+)
 
 # Generic
 
@@ -133,7 +133,7 @@ kyoto_encoded_as encoding shape path = {
 
 # time windows
 get_tumbling_window w t = (t - w.offset) / w.size
-# FIXME tumbling_window w time = group (x -> get_tumbling_window w (time x)) id
+tumbling_window w time = group (x -> get_tumbling_window w (time x)) id
 
 get_sliding_windows w t = 0 .. (w.size / w.slide) |> map (shift -> (get_tumbling_window {size = w.slide, offset = w.offset} t) - shift)
-# FIXME sliding_windows w time red = unnest (x -> get_sliding_windows w (time x)) >> group fst snd red
+sliding_windows w time red = unnest (x -> get_sliding_windows w (time x)) >> group fst snd red

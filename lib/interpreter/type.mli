@@ -13,6 +13,7 @@ type 'var type_expr =
                                                    and picking one of the options to forge some t value. *)
   | GeneratorType of 'var type_expr
   | ReducerType of 'var type_expr * 'var type_expr * 'var type_expr
+  | MappingType of 'var type_expr * 'var type_expr
   | ShapeType of 'var type_expr
 
 type 'var type_constraint =

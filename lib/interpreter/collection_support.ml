@@ -1,4 +1,5 @@
 module Collection = Series.Bounded
+module Mapping = Series.Mapping
 
 module Add(C: sig
   include Compiler.S
@@ -182,42 +183,50 @@ end = struct
       MonoDyn(FunSig(ReducerSig(a,b,c), FunSig(ReducerSig(d,e,f), ReducerSig(PairSig(a,d), PairSig(b,e), PairSig(c,f)))), Reducer.product)
     }}}}}})
     
-(*
+  let mapping_keys =
+    let k = Type.gen_t 0 in
+    let v = Type.gen_t 1 in
+    let t = Type.(poly_t 2 (fun_t (MappingType(k, v)) (GeneratorType k))) in
+    Type_witness.(t, PolyDyn { make = fun k -> PolyDyn { make = fun v -> 
+      MonoDyn(FunSig(MappingSig(k,v),GeneratorSig(k)), Mapping.keys)
+    }})
+
+  let mapping_pairs =
+    let k = Type.gen_t 0 in
+    let v = Type.gen_t 1 in
+    let t = Type.(poly_t 2 (fun_t (MappingType(k, v)) (GeneratorType (PairType(k,v))))) in
+    Type_witness.(t, PolyDyn { make = fun k -> PolyDyn { make = fun v -> 
+      MonoDyn(FunSig(MappingSig(k,v),GeneratorSig(PairSig(k,v))), Mapping.pairs)
+    }})
+
+  let mapping_values =
+    let k = Type.gen_t 0 in
+    let v = Type.gen_t 1 in
+    let t = Type.(poly_t 2 (fun_t (MappingType(k, v)) (fun_t k (GeneratorType v)))) in
+    Type_witness.(t, PolyDyn { make = fun k -> PolyDyn { make = fun v -> 
+      MonoDyn(FunSig(MappingSig(k,v),FunSig(k,GeneratorSig v)), Mapping.values)
+    }})
+
   let group_reducer =
     let a = Type.gen_t 0 in
     let k = Type.gen_t 1 in
     let v = Type.gen_t 2 in
     let b = Type.gen_t 3 in
+    let w = Type.gen_t 4 in
     let key = Type.fun_t a k in
     let value = Type.fun_t a v in
-    let red = Type.ReducerType(v,b) in
-    let grp = Type.(record_t [
-      "keys", GeneratorType k;
-      "pairs", GeneratorType (PairType(k,b));
-      "values", FunType (k, GeneratorType b);
-    ]) in
-    let grp_red = Type.(ReducerType(a, grp)) in
-    let t = Type.(poly_t 4 (fun_t key (fun_t value (fun_t red grp_red)))) in
-    Type_witness.(t, PolyDyn { make = fun a -> PolyDyn { make = fun k -> PolyDyn { make = fun v -> PolyDyn { make = fun b ->
+    let red = Type.ReducerType(v,b,w) in
+    let grp_red = Type.(ReducerType(a, MappingType(k, v), MappingType(k, w))) in
+    let t = Type.(poly_t 5 (fun_t key (fun_t value (fun_t red grp_red)))) in
+    Type_witness.(t, PolyDyn { make = fun a -> PolyDyn { make = fun k -> PolyDyn { make = fun v -> PolyDyn { make = fun b -> PolyDyn { make = fun w ->
       let key = FunSig (a,k) in
       let value = FunSig (a,v) in
-      let red = ReducerSig (v,b) in
-      let grp = RecordSig ( RecordSig ( RecordSig (UnitSig,
-        "keys", GeneratorSig k),
-        "pairs", GeneratorSig (PairSig(k,b))),
-        "values", FunSig (k, GeneratorSig b))
-      in
-      let grp_red = ReducerSig (a,grp) in
-      let to_mapping m =
-        Mapping.(values m, (pairs m, (keys m, ())))
-      in
-      let group_reducer k v r =
-        let gr = Collection.group_reducer k v r in
-        Collection.project to_mapping gr
-      in
-      MonoDyn(FunSig(key, FunSig(value, FunSig(red, grp_red))), group_reducer)
-    }}}})
+      let red = ReducerSig (v,b,w) in
+      let grp_red = ReducerSig (a, MappingSig(k,b), MappingSig(k,w)) in
+      MonoDyn(FunSig(key, FunSig(value, FunSig(red, grp_red))), Mapping.group)
+    }}}}})
 
+(*
   let group_updates =
     let a = Type.gen_t 0 in
     let k = Type.gen_t 1 in
@@ -318,8 +327,11 @@ end = struct
     |> define "project" project
     |> define "union_reducer" union_reducer
     |> define "product_reducer" product_reducer
-(*  |> define "group_reducer" group_reducer
-    |> define "group_updates" group_updates  *)
+    |> define "keys" mapping_keys
+    |> define "pairs" mapping_pairs
+    |> define "values" mapping_values
+    |> define "group_reducer" group_reducer
+(*    |> define "group_updates" group_updates  *)
     |> define "take_first" take_first
     |> define "take_last" take_last
 (*  |> define "first_or" first_or
