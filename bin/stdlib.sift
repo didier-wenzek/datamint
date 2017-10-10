@@ -12,6 +12,7 @@
 
 # Identity function
 id x = x
+pair x y = (x,y)
 curry f a b = f(a,b)
 uncurry f (a,b) = f a b
 constant a x = a
@@ -38,12 +39,16 @@ le a x = x <= a
 string_words = string_extract "[a-zA-Z]+"
 file_words = file_lines >> flat_map string_words
 
-
-# collection append
+# collection
 !infix_left 3 &,    (&) = append
 bag_union = monoid [] append
 bag = bag_union |> mapping (x -> [x])
 
+union x y = append x y |> unique
+set_union = monoid [] union
+set = set_union |> mapping (x -> [x])
+
+# Arith
 sum = monoid 0 (+)
 product = monoid 1 (*)
 !infix_left 8 **, m ** n = repeat n m |> reduce product
@@ -53,8 +58,7 @@ count_at_most n = monoid_with_maximum_check 0 (+) (ge n) |> mapping (constant 1)
 at_least n xs = n <= reduce (count_at_most n) xs
 at_most n xs = n >= reduce (count_at_most (n+1)) xs
 
-group k v r = reduce (group_reducer k v r)
-
+# Bool
 and_reducer = monoid_with_maximum true (and) false
 or_reducer = monoid_with_maximum false (or) true
 forall p = map p >> reduce and_reducer
@@ -62,9 +66,12 @@ exists p = map p >> reduce or_reducer
 # c_forall p = c_map p >> c_reduce and_reducer
 # c_exists p = c_map p >> c_reduce or_reducer
 
-set = group_reducer id (x -> true) or_reducer |> project keys
-union x y = reduce set (append x y)
-set_union = monoid [] union
+# Grouping
+group k v r = reduce (group_reducer k v r)
+
+# FIXME set = group_reducer id (x -> true) or_reducer |> project keys
+# FIXME union x y = reduce set (append x y)
+
 
 partition p = group p id bag
 cross_product xs = unnest (_ -> xs)
