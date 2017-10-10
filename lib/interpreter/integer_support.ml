@@ -16,7 +16,7 @@ end = struct
   let int_sig = Type_witness.(NativeSig("Int", {
     to_string = string_of_int;
     of_string = int_of_string;
-    repr = Generics.int;
+    repr = Generics.Repr.int;
   }))
   let _ = Type_witness.(add_impl "Int" (Sig int_sig))
   

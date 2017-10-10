@@ -1,11 +1,13 @@
 module Bounded = Series.Bounded
 module Reducer = Series.Reducer
+module Generics = Generics.Repr
+
 open Series.Util
 
 type 'a impl = {
   to_string: 'a -> string;
   of_string: string -> 'a;
-  repr: 'a Generics.repr;
+  repr: 'a Generics.t;
 }
 
 type void
@@ -18,7 +20,7 @@ type _ t =
   | RecordSig: 'a t * string * 'b t -> ('b * 'a) t
   | GeneratorSig: 'a t -> 'a Bounded.producer t
   | ReducerSig: 'a t * 'b t * 'c t -> ('a,'b,'c) Reducer.t t
-  | ShapeSig: 'a t -> 'a Generics.repr t
+  | ShapeSig: 'a t -> 'a Generics.t t
   | VoidSig: void t
 
 type type_sig =
@@ -34,7 +36,7 @@ type poly_dyn =
 type (_,_) eq = Eq : ('a,'a) eq
 
 type sig_repr =
-  | SigRepr: 'a t * 'a Generics.repr -> sig_repr
+  | SigRepr: 'a t * 'a Generics.t -> sig_repr
 
 let unit = UnitSig
 let lam a b = FunSig(a,b)
@@ -96,7 +98,7 @@ let dyn_of_shape shape =
   let SigRepr (s_sig, s_repr) = sig_repr_of_shape shape in
   Dyn (ShapeSig s_sig, s_repr)
 
-let rec gen_val_of_sig: type a. a t -> a Generics.repr option
+let rec gen_val_of_sig: type a. a t -> a Generics.t option
   = function
   | UnitSig -> Some Generics.unit
   | NativeSig (_, impl) -> Some impl.repr

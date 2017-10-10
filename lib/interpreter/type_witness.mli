@@ -4,7 +4,7 @@ module Reducer = Series.Reducer
 type 'a impl = {
   to_string: 'a -> string;
   of_string: string -> 'a;
-  repr: 'a Generics.repr;
+  repr: 'a Generics.Repr.t;
 }
 
 (* Phantom type without values, used to compile expression with unused type variables. *)
@@ -18,7 +18,7 @@ type _ t =
   | RecordSig: 'a t * string * 'b t -> ('b * 'a) t
   | GeneratorSig: 'a t -> 'a Bounded.producer t
   | ReducerSig: 'a t * 'b t * 'c t -> ('a,'b,'c) Reducer.t t
-  | ShapeSig: 'a t -> 'a Generics.repr t
+  | ShapeSig: 'a t -> 'a Generics.Repr.t t
   | VoidSig: void t
 
 type type_sig =
@@ -47,7 +47,7 @@ val add_impl: string -> type_sig -> unit
 
 val dyn_of_literal: Type.typ -> string -> dyn
 val dyn_of_shape: Datatype.t -> dyn
-val gen_val_of_sig: 'a t -> 'a Generics.repr option
+val gen_val_of_sig: 'a t -> 'a Generics.Repr.t option
 
 val eval_type: type_sig list -> Type.typ -> type_sig
 val specialize_polydyn: type_sig list -> (poly_dyn * Type.typ list) -> dyn

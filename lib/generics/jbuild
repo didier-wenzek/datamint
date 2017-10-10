@@ -1,0 +1,6 @@
+(jbuild_version 1)
+
+(library
+ ((name Generics)
+  (public_name datamint.generics)
+  (libraries (datamint.series yojson))))

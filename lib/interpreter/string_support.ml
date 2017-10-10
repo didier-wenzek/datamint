@@ -1,3 +1,7 @@
+module Serialization = Generics.Serialization
+module Json_support = Generics.Json_support
+module Marshal_support = Generics.Marshal_support
+
 module Add(C: sig
   include Compiler.S
   include Compiler.With_bool_support
@@ -30,7 +34,7 @@ end = struct
   let string_sig = Type_witness.(NativeSig("String", {
     to_string = escape;
     of_string = id;
-    repr = Generics.string;
+    repr = Generics.Repr.string;
   }))
   let _ = Type_witness.(add_impl "String" (Sig string_sig))
 

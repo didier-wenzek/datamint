@@ -44,7 +44,7 @@ module type Decoder = sig
 
   val decode: 'a decoder -> string -> 'a Result.t
 
-  include Generics.Interpretation with type 'a tc = 'a decoder
+  include Interpretation.S with type 'a tc = 'a decoder
 end
 
 module type Encoder = sig
@@ -52,7 +52,7 @@ module type Encoder = sig
 
   val encode: 'a encoder -> 'a -> string Result.t
 
-  include Generics.Interpretation with type 'a tc = 'a encoder
+  include Interpretation.S with type 'a tc = 'a encoder
 end
 
 module type Encoding = sig
@@ -61,7 +61,7 @@ module type Encoding = sig
   val decode: 'a t -> string -> 'a Result.t
   val encode: 'a t -> 'a -> string Result.t
 
-  include Generics.Interpretation with type 'a tc = 'a t
+  include Interpretation.S with type 'a tc = 'a t
 end
 
 type format = {
@@ -69,29 +69,29 @@ type format = {
   encoder: (module Encoder);
 }
 
-type 'a decoder = 'a Generics.repr -> string -> 'a Result.t
-type 'a encoder = 'a Generics.repr -> 'a -> string Result.t
+type 'a decoder = 'a Repr.t -> string -> 'a Result.t
+type 'a encoder = 'a Repr.t -> 'a -> string Result.t
 
-let format_decoder: format -> 'a Generics.repr -> string -> 'a Result.t =
+let format_decoder: format -> 'a Repr.t -> string -> 'a Result.t =
   fun format -> 
     let format_decoder = format.decoder in
     let module F = (val format_decoder : Decoder) in
-    let decoder = Generics.(
+    let decoder = Repr.(
       fun (type a) repr -> 
-        let module R = (val repr : Repr with type a = a) in 
+        let module R = (val repr : Repr.S with type a = a) in 
         let module N = R.Interpret (F)
         in N.result
     ) in
     fun repr ->
       F.decode (decoder repr)
 
-let format_encoder: format -> 'a Generics.repr -> 'a -> string Result.t =
+let format_encoder: format -> 'a Repr.t -> 'a -> string Result.t =
   fun format ->
     let format_encoder = format.encoder in
     let module F = (val format_encoder: Encoder) in
-    let encoder = Generics.(
+    let encoder = Repr.(
       fun (type a) repr -> 
-        let module R = (val repr : Repr with type a = a) in 
+        let module R = (val repr : Repr.S with type a = a) in 
         let module N = R.Interpret (F)
         in N.result
     ) in

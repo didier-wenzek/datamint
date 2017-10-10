@@ -4,7 +4,7 @@
  ((name Interpreter)
   (public_name datamint.interpreter)
   (preprocess (pps (ppx_deriving.show)))
-  (libraries (datamint.series datamint.kyoto yojson lambda-term))))
+  (libraries (datamint.series datamint.generics datamint.kyoto lambda-term))))
 
 (ocamllex (lexer))
 (ocamlyacc (parser))

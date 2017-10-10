@@ -12,7 +12,7 @@ end = struct
   let bool_sig = Type_witness.(NativeSig("Bool", {
     to_string = string_of_bool;
     of_string = bool_of_string;
-    repr = Generics.bool;
+    repr = Generics.Repr.bool;
   }))
   let _ = Type_witness.(add_impl "Bool" (Sig bool_sig))
 
