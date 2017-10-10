@@ -64,7 +64,6 @@ val de_bruijn_typed: typed_expr -> (typed_de_bruijn_expr * (name * (Type.typ lis
 
 val rename_variables: (DeBruijn.t -> DeBruijn.t) -> (DeBruijn.t, 'a) expr -> (DeBruijn.t, 'a) expr
 
-val show_expr: ('a -> string) -> ('b -> string) -> ('a,'b) expr -> string
 val show_untyped: untyped_expr -> string
 val show_typed: typed_expr -> string
 val show_de_bruijn: de_bruijn_expr -> string

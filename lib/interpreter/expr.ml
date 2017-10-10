@@ -25,6 +25,7 @@ type ('var,'def) expr =
   | Switch of ('var,'def) expr * ('var,'def) expr                (* case [e] of [e] *)
   | Shape of Datatype.t
   | Generic of ('var,'def) expr    (* wrap an expression of type (Shape(a) -> a -> b) => the compiler while provide the shape *)
+  [@@ deriving show]
 
 type name = string
 type untyped_expr = (name, name) expr
@@ -35,46 +36,46 @@ type typed_de_bruijn_expr = (DeBruijn.t, Type.typ) expr
 exception Unknown_value of string
 
 (* Show *)
-let id x = x
-let p = Format.sprintf
-let show_expr show_var show_def =
-  let rec show = function
-  | Var x -> p "Var(%s)" (show_var x)
-  | Unit -> "()"
-  | Lit (_,l) -> p "%s" l
-  | Fun (x, body) -> p "Fun(%s -> %s)" (show_def x) (show body)
-  | App (f, x) -> p "App(%s,%s)" (show f) (show x)
-  | Pair (f, x) -> p "Pair(%s,%s)" (show f) (show x)
-  | Fst x -> p "Fst(%s)" (show x)
-  | Snd x -> p "Snd(%s)" (show x)
-  | EmptyRecord -> p "{}"
-  | Record (r,f,e) -> p "Record(%s,%s,%s)" (show r) f (show e)
-  | Dot (r,f) -> p "Dot(%s,%s)" (show_def r) f
-  | Tag (c,t,e) -> p "Tag(%s,%s,%s)" (show_def c) t (show e)
-  | EmptyCase -> p "case {}"
-  | Case (c,x,body,otherwise) -> p "Case(%s,%s,%s,%s)" c (show_def x) (show body) (show otherwise)
-  | Switch (expr,cases) -> p "Switch(%s,%s)" (show expr) (show cases)
-  | Shape s -> p "Shape(%s)" (Datatype.show s)
-  | Generic f -> p "Generic(%s)" (show f)
-  in show
 
-let show_untyped = show_expr id id
-let show_de_bruijn = show_expr DeBruijn.show (fun () -> "")
+let pp_string = Format.pp_print_string
 
-let show_typed_var show_var show_type (x,ts) =
-  List.fold_left (fun s t -> p "%s[%s]" s (show_type t)) (show_var x) ts
+let pp_unit fmt () = Format.pp_print_string fmt ""
 
-let show_typed_def show_type (x,t) =
-  p "%s:%s" x (show_type t)
+let pp_debruijn = DeBruijn.pp
 
-let show_typed =
-  show_expr (show_typed_var id Type.show) (show_typed_def Type.show)
+let pp_type fmt t = Format.pp_print_string fmt (Type.show t)
 
-let show_de_bruijn_typed =
-  show_expr DeBruijn.show Type.show
+let pp_typed_var fmt (x,ts) =
+  pp_string fmt x;
+  List.iter (fun t ->
+    pp_string fmt "[";
+    pp_type fmt t;
+    pp_string fmt "]";
+  ) ts
+
+let pp_typed_def fmt (x,t) =
+  pp_string fmt x;
+  pp_string fmt ":";
+  pp_type fmt t
+
+let pp_typed_env fmt env =
+  pp_string fmt "|";
+  List.iter (fun var ->
+    pp_string fmt " ";
+    pp_typed_var fmt var;
+    pp_string fmt " |";
+  ) env
+
+let show_untyped = show_expr pp_string pp_string
+let show_de_bruijn = show_expr pp_debruijn pp_unit
+let show_typed = show_expr pp_typed_var pp_typed_def
+let show_de_bruijn_typed = show_expr pp_debruijn pp_type
+
+let show_typed_var (x,ts) =
+  List.fold_left (fun s t -> Format.sprintf "%s[%s]" s (Type.show t)) x ts
 
 let show_env_types env = 
-  List.fold_left (fun env value -> p "%s %s |" env (show_typed_var id Type.show value)) "|" env
+  List.fold_left (fun env value -> Format.sprintf "%s %s |" env (show_typed_var value)) "|" env
 
 (* Transform an untyped expression
    into an expression where each variable is introduced with its type.
@@ -427,6 +428,8 @@ let de_bruijn var_name def_name idx_name idx_def =
     let init_env e = free_vars in
     let rewrite = rewrite_variables init_env augment_env rewrite_var rewrite_def in
     (rewrite expr, free_vars)
+
+let id x = x
 
 let de_bruijn_expr =
   let no_def _ _ = () in

@@ -20,6 +20,7 @@ let rec find idx xs = match idx, xs with
   | _, [] -> raise Not_found
 
 let show = string_of_int
+let pp = Format.pp_print_int
 
 let name n =
   if n < 26

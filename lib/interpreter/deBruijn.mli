@@ -17,6 +17,7 @@ val idx_of: 'a -> 'a list -> t
 val find: t -> 'a list -> 'a
 
 val show: t -> string
+val pp: Format.formatter -> t -> unit
 
 (* Return a type variable name *)
 val name: t -> string
