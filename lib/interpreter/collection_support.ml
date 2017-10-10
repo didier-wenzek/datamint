@@ -216,7 +216,7 @@ end = struct
     let key = Type.fun_t a k in
     let value = Type.fun_t a v in
     let red = Type.ReducerType(v,b,w) in
-    let grp_red = Type.(ReducerType(a, MappingType(k, v), MappingType(k, w))) in
+    let grp_red = Type.(ReducerType(a, MappingType(k,b), MappingType(k,w))) in
     let t = Type.(poly_t 5 (fun_t key (fun_t value (fun_t red grp_red)))) in
     Type_witness.(t, PolyDyn { make = fun a -> PolyDyn { make = fun k -> PolyDyn { make = fun v -> PolyDyn { make = fun b -> PolyDyn { make = fun w ->
       let key = FunSig (a,k) in

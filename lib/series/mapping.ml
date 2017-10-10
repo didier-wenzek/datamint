@@ -29,6 +29,9 @@ type ('k,'v) t =
   | Base: ('k,'v) base -> ('k,'v) t
   | View: ('k,'v,'w) view -> ('k,'w) t
 
+let new_hashtbl () =
+  Hashtbl.create 1024
+
 module Base = struct
   let hash_get m k =
     try Some (Hashtbl.find m k)
@@ -101,19 +104,19 @@ module Base = struct
     keys = Bounded.empty;
     pairs = Bounded.empty;
     value = (fun k -> None);
-    update = (fun updates -> hash_update (Hashtbl.create 1024) updates);
+    update = (fun updates -> hash_update (new_hashtbl ()) updates);
   }
 
   let of_source src = {
     source = src;
-    replaced = Hashtbl.create 1024;
-    removed = Hashtbl.create 1024;
+    replaced = new_hashtbl ();
+    removed = new_hashtbl ();
   }
 
   let of_hashtbl tbl = of_source (source_of_hashtbl tbl)
 
   let of_pairs kvs =
-    let tbl = Hashtbl.create 1024 in
+    let tbl = new_hashtbl () in
     let seed = () in
     let push (k,v) () = Hashtbl.replace tbl k v in
     let term () = of_hashtbl tbl in
@@ -181,7 +184,7 @@ module Base = struct
     m
 
   let of_new_hashtbl () =
-    Hashtbl.create 1024
+    new_hashtbl ()
     |> of_hashtbl
    
 end
