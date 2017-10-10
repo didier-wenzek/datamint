@@ -69,10 +69,6 @@ exists p = map p >> reduce or_reducer
 # Grouping
 group k v r = reduce (group_reducer k v r)
 
-# FIXME set = group_reducer id (x -> true) or_reducer |> project keys
-# FIXME union x y = reduce set (append x y)
-
-
 partition p = group p id bag
 cross_product xs = unnest (_ -> xs)
 map_cross_product f xs ys = cross_product xs ys |> map ((x,y) -> f x y)

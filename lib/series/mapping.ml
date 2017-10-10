@@ -26,17 +26,77 @@ type ('k,'v,'w) view = {
 }
 
 type ('k,'v) t =
+  | Source: ('k,'v) source -> ('k,'v) t
   | Base: ('k,'v) base -> ('k,'v) t
   | View: ('k,'v,'w) view -> ('k,'w) t
 
 let new_hashtbl () =
   Hashtbl.create 1024
 
-module Base = struct
-  let hash_get m k =
-    try Some (Hashtbl.find m k)
-    with Not_found -> None
+let hash_keys m =
+  let fold push =
+    let push k v = push k in
+    Hashtbl.fold push m
+  in
+  Bounded.producer_of_source { Bounded.fold }
 
+let hash_pairs m =
+  let fold push =
+    let push k v = push (k,v) in
+    Hashtbl.fold push m
+  in
+  Bounded.producer_of_source { Bounded.fold }
+
+let hash_get m k =
+  try Some (Hashtbl.find m k)
+  with Not_found -> None
+
+module Source = struct
+  let keys m = m.keys
+  let pairs m = m.pairs
+  let value m k = m.value k
+
+  let rec of_hashtbl tbl =
+    {
+      keys = hash_keys tbl;
+      pairs = hash_pairs tbl;
+      value = hash_get tbl;
+      update = hash_update tbl;
+    }
+
+  and hash_update tbl =
+    let seed = () in
+    let push u () =
+      match u with
+      | Replace (k,v) -> Hashtbl.replace tbl k v
+      | Remove k -> Hashtbl.remove tbl k
+    in
+    let term () =
+      of_hashtbl tbl
+    in
+    Bounded.reduce Reducer.{
+      seed; push; term; full_check = None;
+    }
+
+  let empty = {
+    keys = Bounded.empty;
+    pairs = Bounded.empty;
+    value = (fun k -> None);
+    update = (fun updates -> hash_update (new_hashtbl ()) updates);
+  }
+
+  let of_pairs kvs =
+    let tbl = new_hashtbl () in
+    let seed = () in
+    let push (k,v) () = Hashtbl.replace tbl k v in
+    let term () = of_hashtbl tbl in
+    kvs |> Bounded.reduce Reducer.{
+      seed; push; term; full_check = None;
+    }
+
+end
+
+module Base = struct
   let is_removed m = Hashtbl.mem m.removed
   let is_replaced m = Hashtbl.mem m.replaced
   let replaced_value m = hash_get m.replaced
@@ -45,20 +105,6 @@ module Base = struct
     (is_removed m k) || (is_replaced m k)
   let has_updated_key m (k,_) =
     is_updated_key m k 
-
-  let hash_keys m =
-    let fold push =
-      let push k v = push k in
-      Hashtbl.fold push m
-    in
-    Bounded.producer_of_source { Bounded.fold }
-
-  let hash_pairs m =
-    let fold push =
-      let push k v = push (k,v) in
-      Hashtbl.fold push m
-    in
-    Bounded.producer_of_source { Bounded.fold }
 
   let value m k =
     if is_removed m k
@@ -78,51 +124,11 @@ module Base = struct
       (hash_pairs m.replaced)
       (m.source.pairs |> Bounded.remove (has_updated_key m))
 
-  let rec source_of_hashtbl tbl =
-    {
-      keys = hash_keys tbl;
-      pairs = hash_pairs tbl;
-      value = hash_get tbl;
-      update = hash_update tbl;
-    }
-
-  and hash_update tbl =
-    let seed = () in
-    let push u () =
-      match u with
-      | Replace (k,v) -> Hashtbl.replace tbl k v
-      | Remove k -> Hashtbl.remove tbl k
-    in
-    let term () =
-      source_of_hashtbl tbl
-    in
-    Bounded.reduce Reducer.{
-      seed; push; term; full_check = None;
-    }
-
-  let new_empty_source () = {
-    keys = Bounded.empty;
-    pairs = Bounded.empty;
-    value = (fun k -> None);
-    update = (fun updates -> hash_update (new_hashtbl ()) updates);
-  }
-
   let of_source src = {
     source = src;
     replaced = new_hashtbl ();
     removed = new_hashtbl ();
   }
-
-  let of_hashtbl tbl = of_source (source_of_hashtbl tbl)
-
-  let of_pairs kvs =
-    let tbl = new_hashtbl () in
-    let seed = () in
-    let push (k,v) () = Hashtbl.replace tbl k v in
-    let term () = of_hashtbl tbl in
-    kvs |> Bounded.reduce Reducer.{
-      seed; push; term; full_check = None;
-    }
 
   let do_replace (k,v) m =
     Hashtbl.remove m.removed k;
@@ -132,10 +138,10 @@ module Base = struct
     Hashtbl.remove m.replaced k;
     Hashtbl.replace m.removed k ()
 
-  let do_update_with key init push v m = 
+  let do_update_with key v_seed push v m = 
     let k = key v in
     let acc = match value m k with
-      | None -> init ()
+      | None -> v_seed
       | Some acc -> acc
     in
     do_replace (k, push v acc) m
@@ -148,8 +154,8 @@ module Base = struct
     do_remove k m;
     m
 
-  let update_with key init push kv m = 
-    do_update_with key init push kv m;
+  let update_with key v_seed push kv m = 
+    do_update_with key v_seed push kv m;
     m
 
   let updates m =
@@ -183,10 +189,6 @@ module Base = struct
     let () = Hashtbl.clear m.removed in
     m
 
-  let of_new_hashtbl () =
-    new_hashtbl ()
-    |> of_hashtbl
-   
 end
 
 module View = struct
@@ -219,23 +221,26 @@ module View = struct
     project = f;
   }
 
-  let cow v = Base.of_pairs (pairs v)
+  let cow v = Base.of_source (Source.of_pairs (pairs v))
 end
 
-let of_source src = Base (Base.of_source src )
-let of_hashtbl tbl = Base (Base.of_hashtbl tbl)
-let of_pairs kvs = Base (Base.of_pairs kvs)
-let new_empty () = of_source (Base.new_empty_source ())
+let empty = Source (Source.empty)
+let of_source src = Source (src)
+let of_hashtbl tbl = Source (Source.of_hashtbl tbl)
+let of_pairs kvs = Source (Source.of_pairs kvs)
 
 let value = function
+  | Source s -> Source.value s
   | Base b -> Base.value b
   | View v -> View.value v
 
 let keys = function
+  | Source s -> Source.keys s
   | Base b -> Base.keys b
   | View v -> View.keys v
 
 let pairs = function
+  | Source s -> Source.pairs s
   | Base b -> Base.pairs b
   | View v -> View.pairs v
 
@@ -244,41 +249,49 @@ let values m =
   fun k -> Bounded.of_option (get_value k)
 
 let project f = function
+  | Source s -> View (View.of_base (Base.of_source s) f)
   | Base b -> View (View.of_base b f)
   | View v -> View (View.project f v)
 
 let updates = function
+  | Source s -> Base.updates (Base.of_source s)
   | Base b -> Base.updates b
   | View v -> View.updates v
 
 let replace kv = function
+  | Source s -> Base (Base.replace kv (Base.of_source s))
   | Base b -> Base (Base.replace kv b)
   | View v -> Base (Base.replace kv (View.cow v))
 
 let remove k = function
+  | Source s -> Base (Base.remove k (Base.of_source s))
   | Base b -> Base (Base.remove k b)
   | View v -> Base (Base.remove k (View.cow v))
 
-let update_with key init push kv = function
-  | Base b -> Base (Base.update_with key init push kv b)
-  | View v -> Base (Base.update_with key init push kv (View.cow v))
+let update_with key v_seed push kv = function
+  | Source s -> Base (Base.update_with key v_seed push kv (Base.of_source s))
+  | Base b -> Base (Base.update_with key v_seed push kv b)
+  | View v -> Base (Base.update_with key v_seed push kv (View.cow v))
 
 let apply_updates updates = function
+  | Source s -> Base (Base.apply_updates updates (Base.of_source s))
   | Base b -> Base (Base.apply_updates updates b)
   | View v -> Base (Base.apply_updates updates (View.cow v))
 
 let commit_updates = function
+  | Source s -> Base (Base.commit_updates (Base.of_source s))
   | Base b -> Base (Base.commit_updates b)
   | View b -> View (View.commit_updates b)
 
 let rollback_updates = function
+  | Source s -> Base (Base.rollback_updates (Base.of_source s))
   | Base b -> Base (Base.rollback_updates b)
   | View b -> View (View.rollback_updates b)
 
 let group key value v_red =
-  let seed = new_empty () in
-  let init () = v_red.Reducer.seed in
-  let push = update_with key init (fun pair -> v_red.Reducer.push (value pair)) in
+  let seed = empty in
+  let v_seed = v_red.Reducer.seed in
+  let push = update_with key v_seed (fun pair -> v_red.Reducer.push (value pair)) in
   let term = project v_red.Reducer.term in
   Reducer.{
     seed; push; term; full_check = None;
@@ -303,7 +316,7 @@ let group_updates extract_key extract_value red insert rem =
     term acc
   in
   fun r -> {
-    seed = (new_empty (), r.seed);
+    seed = (empty, r.seed);
     push = adapt_push r.push;
     term = adapt_term r.push r.term;
     full_check = combine_full_checks None r;

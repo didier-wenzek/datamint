@@ -29,10 +29,11 @@ type ('k,'v,'w) view = {
 
 (* The type of mapping from a key to a singular optional value *)
 type ('k,'v) t =
+  | Source: ('k,'v) source -> ('k,'v) t
   | Base: ('k,'v) base -> ('k,'v) t
   | View: ('k,'v,'w) view -> ('k,'w) t
 
-val new_empty: unit -> ('k,'v) t
+val empty: ('k,'v) t
 val of_source: ('k,'v) source -> ('k,'v) t
 val of_hashtbl: ('k,'v) Hashtbl.t -> ('k,'v) t 
 val of_pairs: ('k*'v) producer -> ('k,'v) t
@@ -46,7 +47,7 @@ val values: ('k,'v) t -> 'k -> 'v producer
 
 val replace: ('k*'v) -> ('k,'v) t -> ('k,'v) t
 val remove: 'k -> ('k,'v) t -> ('k,'v) t
-val update_with: ('a -> 'k) -> (unit -> 'v) -> ('a -> 'v -> 'v) -> 'a -> ('k,'v) t -> ('k,'v) t
+val update_with: ('a -> 'k) -> 'v -> ('a -> 'v -> 'v) -> 'a -> ('k,'v) t -> ('k,'v) t
 
 val updates: ('k,'v) t -> ('k,'v) update producer
 val apply_updates: ('k,'v) update producer -> ('k,'v) t -> ('k,'v) t

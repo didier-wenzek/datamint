@@ -105,7 +105,7 @@ module Decoder = struct
           | Error r -> Error r
         )
       in
-      loop (Series.Mapping.new_empty ())
+      loop (Series.Mapping.empty)
     in
     function
     | `List pairs ->
