@@ -1,7 +1,4 @@
 open Cmdliner
-open Lwt
-open Cohttp
-open Cohttp_lwt_unix
 
 let info =
   let doc = "Event listener and logger." in
@@ -17,34 +14,11 @@ let conf_file =
   let doc = "Configuration file" in
   Arg.(required & pos 0 (some string) None & info [] ~docv:"CONF_FILE" ~doc)
 
-module HTTP = struct
-
-  let log loggers req body =
-    let topic = Uri.path (Request.uri req) in
-    match Logger.Env.find loggers topic with
-    | None -> Lwt.fail Not_found
-    | Some callback -> (
-      Cohttp_lwt.Body.to_string body
-      >>= callback topic
-    )
-      
-  let callback loggers _conn req body =
-    try_bind
-      (fun () -> log loggers req body)
-      (fun res -> Server.respond_string ~status:`Created ~body:"Created" ())
-      (fun err -> Server.respond_string ~status:`Bad_request ~body:"ERROR" ())
-
-  let server port loggers =
-    let mode = `TCP (`Port 8000) in
-    let callback = callback loggers in
-    Server.create ~mode (Server.make ~callback ())
-end
-
 let server conf_file =
   let config = Config.load conf_file in
   let loggers = Config.loggers config in
   let port = Config.port config in
-  HTTP.server port loggers
+  Http.server port loggers
   |> Lwt_main.run
 
 let server_t =
