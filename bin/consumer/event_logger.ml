@@ -41,11 +41,10 @@ module HTTP = struct
 end
 
 let server conf_file =
-  let loggers =
-    Logger.Env.empty
-    |> Logger.Env.set_default_logger (Some Logger.stderr)
-  in
-  HTTP.server 8000 loggers
+  let config = Config.load conf_file in
+  let loggers = Config.loggers config in
+  let port = Config.port config in
+  HTTP.server port loggers
   |> Lwt_main.run
 
 let server_t =
