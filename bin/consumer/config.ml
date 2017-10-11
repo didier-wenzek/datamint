@@ -1,9 +1,17 @@
-type config = unit
+open Sexplib
+open Sexplib.Std
+
+type config =
+  { http: Http.config;
+    loggers: Logger.config list;
+  } [@@deriving sexp]
 
 let loggers config =
-  Logger.Env.empty
-  |> Logger.Env.set_default_logger (Some Logger.stderr)
+  Logger.Env.of_configs config.loggers
 
-let port config = 8000
+let http_config config =
+  Some config.http
 
-let load path = ()
+let load path =
+  Sexp.load_sexp path
+  |> config_of_sexp

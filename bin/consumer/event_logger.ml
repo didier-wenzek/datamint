@@ -17,8 +17,10 @@ let conf_file =
 let server conf_file =
   let config = Config.load conf_file in
   let loggers = Config.loggers config in
-  let port = Config.port config in
-  Http.server port loggers
+  (match Config.http_config config with
+    | Some http_config -> Http.server http_config loggers
+    | None -> Lwt.return_unit
+  )
   |> Lwt_main.run
 
 let server_t =

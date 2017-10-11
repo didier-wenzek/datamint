@@ -1,6 +1,12 @@
 open Cohttp
 open Cohttp_lwt_unix
 open Lwt
+open Sexplib
+open Sexplib.Std
+
+type config =
+  { port: int;
+  } [@@deriving sexp]
 
 let log loggers req body =
   let topic = Uri.path (Request.uri req) in
@@ -17,7 +23,7 @@ let callback loggers _conn req body =
     (fun res -> Server.respond_string ~status:`Created ~body:"Created" ())
     (fun err -> Server.respond_string ~status:`Bad_request ~body:"ERROR" ())
 
-let server port loggers =
-  let mode = `TCP (`Port 8000) in
+let server config loggers =
+  let mode = `TCP (`Port config.port) in
   let callback = callback loggers in
   Server.create ~mode (Server.make ~callback ())

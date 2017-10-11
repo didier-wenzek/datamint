@@ -4,7 +4,8 @@
  ((names (event_logger))
   (package datamint)
   (public_names (datamint-event-logger))
-  (libraries (datamint cmdliner cohttp-lwt-unix websocket-lwt))))
+  (preprocess (pps (ppx_sexp_conv)))
+  (libraries (datamint cmdliner sexplib cohttp-lwt-unix websocket-lwt))))
 
 (install
   ((section bin)
