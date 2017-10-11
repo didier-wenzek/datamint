@@ -4,44 +4,52 @@ open Cohttp
 open Cohttp_lwt_unix
 
 let info =
-  let doc = "Log the events received over misc network endpoints" in
+  let doc = "Event listener and logger." in
   let man = [
     `S "DESCRIPTION";
-    `P "$(tname) URI LOGFILE
-        record all  DATASET.";
+    `P "$(tname) CONF_FILE
+
+        consumes and logs the events received over the network.";
   ] in
-  Term.info "http_logger" ~doc ~man
+  Term.info "event_logger" ~doc ~man
 
-let uri =
-  let doc = "Filter events with the given uri" in
-  Arg.(required & pos 0 (some string) None & info [] ~docv:"URI" ~doc)
+let conf_file =
+  let doc = "Configuration file" in
+  Arg.(required & pos 0 (some string) None & info [] ~docv:"CONF_FILE" ~doc)
 
-let logfile =
-  let doc = "File where the events are recorded" in
-  Arg.(required & pos 1 (some string) None & info [] ~docv:"LOGFILE" ~doc)
+module HTTP = struct
 
-let port =
-  let doc = "Listen http requests on port $(docv)" in
-  Arg.(value & opt int 8000 & info ["p"; "port"] ~docv:"PORT" ~doc)
+  let log loggers req body =
+    let topic = Uri.path (Request.uri req) in
+    match Logger.Env.find loggers topic with
+    | None -> Lwt.fail Not_found
+    | Some callback -> (
+      Cohttp_lwt.Body.to_string body
+      >>= callback topic
+    )
+      
+  let callback loggers _conn req body =
+    try_bind
+      (fun () -> log loggers req body)
+      (fun res -> Server.respond_string ~status:`Created ~body:"Created" ())
+      (fun err -> Server.respond_string ~status:`Bad_request ~body:"ERROR" ())
 
-let log req body =
-  let uri = req |> Request.uri |> Uri.path in
-  Printf.printf "%s: %s\n%!" uri body;
-  Lwt.return (Printf.sprintf "New %s\n" uri)
+  let server port loggers =
+    let mode = `TCP (`Port 8000) in
+    let callback = callback loggers in
+    Server.create ~mode (Server.make ~callback ())
+end
 
-let callback _conn req body =
-  try_bind
-    (fun () -> Cohttp_lwt.Body.to_string body >>= log req)
-    (fun res -> Server.respond_string ~status:`Created ~body:res ())
-    (fun err -> Server.respond_string ~status:`Bad_request ~body:"ERROR" ())
-
-let server port uri logfile =
-  let mode = `TCP (`Port port) in
-  Server.create ~mode (Server.make ~callback ())
+let server conf_file =
+  let loggers =
+    Logger.Env.empty
+    |> Logger.Env.set_default_logger (Some Logger.stderr)
+  in
+  HTTP.server 8000 loggers
   |> Lwt_main.run
 
 let server_t =
-  Term.(pure server $ port $ uri $ logfile)
+  Term.(pure server $ conf_file)
 
 let main () =
   match Term.eval (server_t, info) with
