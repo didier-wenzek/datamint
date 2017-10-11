@@ -1,0 +1,14 @@
+(jbuild_version 1)
+
+(executables
+ ((names (event_logger))
+  (package datamint)
+  (public_names (datamint-event-logger))
+  (libraries (datamint cmdliner cohttp-lwt-unix websocket-lwt))))
+
+(install
+  ((section bin)
+   (package datamint)
+   (files (
+     (event-logger.conf as datamint-event-logger.conf)
+   ))))
