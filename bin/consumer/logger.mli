@@ -20,7 +20,7 @@ module Env : sig
 
   val find: t -> topic -> logger option
 
-  val of_configs: config list -> t
+  val open_configs: config list -> t Lwt.t
 end
 
 val stdout: logger

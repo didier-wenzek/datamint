@@ -6,11 +6,11 @@ type config =
     loggers: Logger.config list;
   } [@@deriving sexp]
 
-let loggers config =
-  Logger.Env.of_configs config.loggers
+let open_loggers config =
+  Logger.Env.open_configs config.loggers
 
 let http_config config =
-  Some config.http
+  config.http
 
 let load path =
   Sexp.load_sexps path

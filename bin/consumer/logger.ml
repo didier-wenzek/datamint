@@ -30,9 +30,9 @@ let file path =
   Lwt_io.fprintf cout "%s: %s\n%!"
 
 let logger_of_kind = function
-  | Stdout -> stdout
-  | Stderr -> stderr
-  | File path -> stdout (* FIXME *)
+  | Stdout -> Lwt.return stdout
+  | Stderr -> Lwt.return stderr
+  | File path -> file path
 
 module Dict = Map.Make(String)
 
@@ -63,8 +63,18 @@ module Env = struct
       Not_found -> env.default
 
   let add_config env (topic,kind) =
-    add_logger topic (logger_of_kind kind) env
+    logger_of_kind kind
+    >|= fun logger ->
+    add_logger topic logger env
 
-  let of_configs =
-    List.fold_left add_config empty
+  let rec add_configs env = function
+    | [] -> Lwt.return env
+    | conf::confs -> (
+      add_config env conf
+      >>= fun env ->
+      add_configs env confs
+    )
+
+  let open_configs =
+    add_configs empty
 end
