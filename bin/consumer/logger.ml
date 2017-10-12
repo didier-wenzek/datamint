@@ -15,19 +15,9 @@ type config = topic * logger_kind
 
 let stdout = Lwt_io.printf "%s: %s\n%!"
 let stderr = Lwt_io.eprintf "%s: %s\n%!"
+let file = File_logger.file
 
 open Lwt.Infix
-
-let open_append_only path =
-  let flags = Unix.[O_WRONLY; O_NONBLOCK; O_APPEND; O_CREAT] in
-  let perm = 0o640 in
-  let mode = Lwt_io.output in
-  Lwt_io.open_file ~flags ~perm ~mode path
-
-let file path =
-  open_append_only path
-  >|= fun cout ->
-  Lwt_io.fprintf cout "%s: %s\n%!"
 
 let logger_of_kind = function
   | Stdout -> Lwt.return stdout
