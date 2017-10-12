@@ -8,6 +8,10 @@ type config =
   { port: int;
   } [@@deriving sexp]
 
+let config_of_sexp s =
+  try { port = int_of_sexp s }
+  with e -> config_of_sexp s 
+
 let log loggers req body =
   let topic = Uri.path (Request.uri req) in
   match Logger.Env.find loggers topic with
