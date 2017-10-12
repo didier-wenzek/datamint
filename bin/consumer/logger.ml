@@ -46,6 +46,11 @@ module Env = struct
     env with default;
   }
 
+  let add_logger_or_default topic logger env =
+    if topic = "*"
+    then set_default_logger (Some logger) env
+    else add_logger topic logger env
+
   let find env t =
     try
       Some (Dict.find t env.loggers)
@@ -55,7 +60,7 @@ module Env = struct
   let add_config env (topic,kind) =
     logger_of_kind kind
     >|= fun logger ->
-    add_logger topic logger env
+    add_logger_or_default topic logger env
 
   let rec add_configs env = function
     | [] -> Lwt.return env
