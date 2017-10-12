@@ -11,5 +11,5 @@
   ((section bin)
    (package datamint)
    (files (
-     (event-logger.conf as datamint-event-logger.conf)
+     (example.conf as datamint-event-logger.conf)
    ))))
