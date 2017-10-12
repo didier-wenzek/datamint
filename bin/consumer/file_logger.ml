@@ -13,6 +13,7 @@ let buffered_appender cout =
     Buffer.add_string buffer topic;
     Buffer.add_string buffer ": ";
     Buffer.add_string buffer event;
+    Buffer.add_char buffer '\n';
     if Buffer.length buffer > len
     then
       let content = Buffer.contents buffer in

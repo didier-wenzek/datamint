@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<body>
+<script>
+  var ws = new WebSocket('ws://localhost:8001/events/c');
+  ws.onopen = function() {
+    console.log('Websocket opened');
+  };
+  ws.onmessage = function(event) {
+    console.log('Websocket received: ' + event.data);
+  };
+  ws.onerror = function(error) {
+    console.log('Websocket error: ' + error.data);
+  };
+  ws.onclose = function() {
+    console.log('Websocket closed');
+  };
+  function send_event() {
+    var event = document.getElementById("event").value;
+    ws.send(event);
+    console.log('Websocket sent: ' + event);
+  };
+</script>
+Websocket events are logged into the console !
+
+<input type="text" id="event" value="event content"/>
+<button onclick="send_event()">Send event</button> 
+</body>

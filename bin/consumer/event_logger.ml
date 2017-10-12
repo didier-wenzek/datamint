@@ -15,14 +15,19 @@ let conf_file =
   let doc = "Configuration file" in
   Arg.(required & pos 0 (some string) None & info [] ~docv:"CONF_FILE" ~doc)
 
-let server_thread config =
+let launch_threads threads loggers =
+  threads
+  |> List.map (fun launch -> launch loggers)
+  |> Lwt.join
+
+let launch_server config =
   Config.open_loggers config
   >>=
-  Http.server (Config.http_config config)
+  launch_threads (Config.endpoints config)
 
 let server conf_file =
   Config.load conf_file
-  |> server_thread
+  |> launch_server
   |> Lwt_main.run
 
 let server_t =

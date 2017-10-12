@@ -1,6 +1,6 @@
+open Lwt
 open Cohttp
 open Cohttp_lwt_unix
-open Lwt
 open Sexplib
 open Sexplib.Std
 
@@ -24,8 +24,8 @@ let log loggers req body =
 let callback loggers _conn req body =
   try_bind
     (fun () -> log loggers req body)
-    (fun res -> Server.respond_string ~status:`Created ~body:"Created" ())
-    (fun err -> Server.respond_string ~status:`Bad_request ~body:"ERROR" ())
+    (fun res -> Server.respond_string ~status:`Created ~body:"Created\n" ())
+    (fun err -> Server.respond_string ~status:`Bad_request ~body:"ERROR\n" ())
 
 let server config loggers =
   let mode = `TCP (`Port config.port) in

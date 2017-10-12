@@ -1,16 +1,26 @@
 open Sexplib
 open Sexplib.Std
 
+type endpoint =
+  | Http of Http.config
+  | Ws of Web_sockets.config
+  [@@deriving sexp]
+
 type config =
-  { http: Http.config;
+  { endpoints: endpoint list;
     loggers: Logger.config list;
   } [@@deriving sexp]
 
 let open_loggers config =
   Logger.Env.open_configs config.loggers
 
-let http_config config =
-  config.http
+let endpoint_server = function
+  | Http config -> Http.server config
+  | Ws config -> Web_sockets.server config
+
+let endpoints config =
+  config.endpoints
+  |> List.map endpoint_server
 
 let load path =
   Sexp.load_sexps path
