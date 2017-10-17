@@ -15,14 +15,15 @@ module type S = sig
   val inverse: ('a,'b) relation -> ('b,'a) relation
 
   val select: 'a -> 'a value
-  val reduce: ('a,'b) reducer -> 'a -> 'b value
-  val group: 'a -> ('b,'c) reducer -> 'b -> ('a*'c) value
+  val group: 'a -> 'b -> ('a*'b) value
+  val reduce: ('a,'b) reducer -> 'a value -> 'b value
+  val reduce_group: ('a,'b) reducer -> ('c*'a) value -> ('c*'b) value
   val count: ('a,int) reducer
 
-  val generate: ('a,'b) relation -> ('a -> 'b -> 'c value) -> 'c value
-  val map:      ('a,'b) relation -> 'a -> ('b -> 'c value) -> 'c value
-  val inv_map:  ('a,'b) relation -> 'b -> ('a -> 'c value) -> 'c value
-  val filter:   ('a,'b) relation -> 'a -> 'b -> (unit-> 'c value) -> 'c value
+  val generate: ('a,'b) relation -> ('a -> 'b -> 'c value) -> 'c value          (* FIXME: there are missing information           *)
+  val map:      ('a,'b) relation -> 'a -> ('b -> 'c value) -> 'c value          (*        - what to do when the result is empty ? *)
+  val inv_map:  ('a,'b) relation -> 'b -> ('a -> 'c value) -> 'c value          (*        - how to combine two results ?          *) 
+  val filter:   ('a,'b) relation -> 'a -> 'b -> (unit-> 'c value) -> 'c value   (* Can we use implicit module ?                   *)
 
   val generate_members: ('a) collection -> ('a -> 'b value) -> 'b value
   val filter_members:   ('a) collection -> 'a -> (unit -> 'b value) -> 'b value
@@ -106,9 +107,12 @@ module Comp(Schema: BS) = struct
 
   let count_of_posts =
     generate_members posts $$ fun post ->
-    reduce count post
+    select post
+    |> reduce count
 
   let count_of_posts_per_author =
     generate Author.posts $$ fun author post ->
-    group author count post
+    group author post
+    |> reduce_group count
+
 end
