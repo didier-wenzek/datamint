@@ -153,6 +153,7 @@ module Encoder = struct
     let row = row_encoder row in
     match field, row with
       | `Assoc field, `Assoc row -> `Assoc (List.rev_append field row)
+      | `Assoc _, `Null -> field
       | _, _ -> assert false
 
   let record fields_encoder = fields_encoder
