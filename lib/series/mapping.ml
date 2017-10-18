@@ -321,3 +321,65 @@ let group_updates extract_key extract_value red insert rem =
     term = adapt_term r.push r.term;
     full_check = combine_full_checks None r;
   }
+
+(*
+   # Map equality
+
+   forall (k, k_xs, k_ys) in
+       { k -> (some @ x, ∅) | (k,x) in xs }
+     & { k -> (∅, some @ y) | (k,y) in ys }
+   then
+     k_xs == k_ys
+
+   # Set equality
+
+   forall (x, in_xs, in_ys) in
+       { x -> (exists @ x, ∅) | x in xs }
+     & { x -> (∅, exists @ y) | y in ys }
+   then
+     in_xs == in_ys
+
+   # MultiMaps equality
+
+   forall (k, k_xs, k_ys) in
+       { k -> (set @ x, ∅) | (k,x) in xs }
+     & { k -> (∅, set @ y) | (k,y) in ys }
+   then
+     k_xs == k_ys
+*)
+
+let left x = (Some x, None)
+let right x = (None, Some x)
+
+let matching_pairs eq =
+  let first x y = match x with
+    | None -> y
+    | x -> x
+  in
+  let merge_pairs (x1,y1) (x2,y2) =
+    (first x1 x2, first y1 y2)
+  in
+  let full_pair = function
+    | (Some _, Some _) -> true
+    | _ -> false
+  in
+  let check_pair_eq = function
+    | (Some x, Some y) -> eq x y
+    | _ -> false
+  in
+  Reducer.{
+    seed = (None,None);
+    push = merge_pairs;
+    term = check_pair_eq;
+    full_check = Some full_pair
+  }
+
+let equal key_eq value_eq =
+  let group_matching_pairs =
+    Bounded.reduce (group fst snd (matching_pairs value_eq))
+  in
+  fun m n ->
+    let m_pairs = pairs m |> Bounded.map (fun (k,v) -> (k, left v)) in
+    let n_pairs = pairs n |> Bounded.map (fun (k,v) -> (k, right v)) in
+    let matches = Bounded.append m_pairs n_pairs |> group_matching_pairs in
+    pairs matches |> Bounded.forall snd

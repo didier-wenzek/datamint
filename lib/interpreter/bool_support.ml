@@ -48,6 +48,13 @@ end = struct
       MonoDyn(FunSig(bool_sig, FunSig(lazy_a, FunSig(lazy_a ,a))), if_then_else)
     })
 
+  let equal =
+    let a = Type.gen_t 0 in
+    let t = Type.(poly_t 1 (fun_t (ShapeType a) (fun_t a (fun_t a bool_t)))) in
+    Type_witness.(t, PolyDyn { make = fun a ->
+      MonoDyn(FunSig(ShapeSig a,FunSig(a, FunSig(a, bool_sig))), Generics.Equal.generic)
+    })
+
   type gen_comparator = { comp:'a. 'a -> 'a -> bool }
   let comp_operator op =
     let a = gen_t 0 in
@@ -110,8 +117,7 @@ end = struct
     |> define "and" (bool_operator (&&))
     |> define "or" (bool_operator (||))
     |> define "if_then_else" if_then_else
-    |> define "==" (comp_operator { comp = (=) })
-    |> define "!=" (comp_operator { comp = (<>) })
+    |> define "equal" equal
     |> define "<" (comp_operator { comp = (<) })
     |> define ">" (comp_operator { comp = (>) })
     |> define "<=" (comp_operator { comp = (<=) })

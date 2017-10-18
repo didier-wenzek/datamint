@@ -22,6 +22,11 @@ swap (x,y) = (y,x)
 pair_with f x = (f x, x)
 dup x = (x,x)
 
+# equality
+
+(==) = generic equal
+(!=) x y = not (x == y)
+
 # range
 !infix_left 1 ..   , min..max = range min max
 !infix_left 1 ..<  , n ..< m  = range n (m-1)

@@ -150,7 +150,7 @@ let suite =
   test_eval "sum = monoid 0 (+), reduce sum (map ((*) 2) (range 1 10))"             [ "sum : Reducer(Int, Int, Int)"; "110" ];
   test_eval "reduce (monoid 0 (+)) (flat_map (range 1) (range 1 10))"               [ "220" ];
   test_eval "reduce (monoid 0 (+)) (map (x -> x * (11 - x)) (range 1 10))"          [ "220" ];
-  test_eval "reduce (monoid 0 (+)) (filter (x -> (x mod 2) == 0) (range 1 10))"     [ "30" ];
+  test_eval "reduce (monoid 0 (+)) (filter (x -> (x mod 2) < 1) (range 1 10))"     [ "30" ];
   test_eval "x_in = map (x -> { x = x }), x_in (range 1 3)"                         [ "x_in : forall a. [a] -> [{ x:a }]"; "[{x = 1}, {x = 2}, {x = 3}]" ];
   test_eval "add_y_in ys = flat_map (r -> map (y -> r with { y = y }) ys)"          [ "add_y_in : forall a, b with { ... }. [a] -> [b] -> [b with { y:a }]" ];
   test_eval "x_in = map (x -> { x = x })

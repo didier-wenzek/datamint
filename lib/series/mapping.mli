@@ -69,3 +69,8 @@ val group_updates:
   -> ('k*'w -> 'b)                       (* command to emit when a pair is removed *)
   -> ('b,'c,'d) reducer                  (* command reducer *)
   -> ('a, ('k, 'm) t * 'c, 'd) reducer   (* a reducer of `a` values into a stream of commands *)
+
+val equal:
+     ('k -> 'k -> bool)                  (* key equality *)
+  -> ('v -> 'v -> bool)                  (* value equality *)
+  -> ('k,'v) t -> ('k,'v) t -> bool      (* mapping equality *)

@@ -173,3 +173,36 @@ let of_hashtbl xs =
 let to_list xs = reduce Reducer.list_reducer xs
 
 let to_bag xs = reduce Reducer.bag_reducer xs
+
+(** Equality of two series.
+
+   forall (i, ox, oy) in
+       { i -> (option @ x, ø) | (i,x) in xs }
+     & { i -> (ø, option @ y) | (i,y) in ys }
+   then
+     ox == oy
+*)
+let equal item_eq =
+  let push y = function
+    | (true, x::xs) when item_eq x y -> (true, xs)
+    | _ -> (false, [])
+  in
+  let is_full = function
+    | (true, _) -> false
+    | _ -> true
+  in
+  let term = function
+    | (true, []) -> true
+    | _ -> false
+  in
+  fun xs ->
+    let xs = to_list xs in
+    let seed = (true,xs) in
+    let check_items =
+      Reducer.{
+        seed;
+        push; term;
+        full_check = Some is_full;
+      }
+    in
+    reduce check_items
