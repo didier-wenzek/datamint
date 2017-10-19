@@ -2,9 +2,16 @@ open OUnit2
 open Series
 open Util
 
+let seq = Bounded.of_list
+
 let test_apply name f x y =
   let test test_ctxt =
     assert_equal y (f x)
+  in name >:: test
+
+let test_apply2 name f x y z =
+  let test test_ctxt =
+    assert_equal z (f x y)
   in name >:: test
 
 let test_reducer name f =
@@ -25,5 +32,9 @@ let suite = "series">:::[
   test_transducer "unique" (Bounded.unique) [] [];
   test_reducer "string reducer" (Bounded.show "(" ", " ")" string_of_int) [1;2;3;4] "(1, 2, 3, 4)";
   test_reducer "string reducer" (Bounded.show "(" ", " ")" string_of_int) [] "()";
+  test_apply2 "series equality" (Bounded.equal (==)) (seq [1;2;3]) (seq [1;2;3]) true;
+  test_apply2 "series equality" (Bounded.equal (==)) (seq [1;2;3;4]) (seq [1;2;3]) false;
+  test_apply2 "series equality" (Bounded.equal (==)) (seq [1;2;3]) (seq [1;2;3;4]) false;
+  test_apply2 "series equality" (Bounded.equal (==)) (seq [1;2;3]) (seq [3;2;1]) false;
 ]
 

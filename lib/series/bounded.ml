@@ -85,6 +85,13 @@ let filter_map f xs = { iter = fun r -> xs.iter (Reducer.filter_map f r) }
 let flat_map f xs = { iter = fun r -> xs.iter (Reducer.flat_map iter f r) }
 let unnest f xs = { iter = fun r -> xs.iter (Reducer.unnest iter f r) }
 
+let map_fst f xs = { iter = fun r -> xs.iter (Reducer.map_fst f r) }
+let map_snd f xs = { iter = fun r -> xs.iter (Reducer.map_snd f r) }
+let filter_fst f xs = { iter = fun r -> xs.iter (Reducer.filter_fst f r) }
+let filter_snd f xs = { iter = fun r -> xs.iter (Reducer.filter_snd f r) }
+let filter_map_fst f xs = { iter = fun r -> xs.iter (Reducer.filter_map_fst f r) }
+let filter_map_snd f xs = { iter = fun r -> xs.iter (Reducer.filter_map_snd f r) }
+
 let forall p xs = xs |> map p |> reduce Reducer.and_reducer
 let exists p xs = xs |> map p |> reduce Reducer.or_reducer
 let is_empty xs = forall (fun _ -> false) xs

@@ -15,6 +15,13 @@ let flat_map iter f r = { r with push = fun x -> iter r (f x) }
 let unnest iter f r = { r with push = fun x -> iter { r with push = fun y -> r.push (y,x) } (f x) }
 let project f r = { r with term = r.term >> f }
 
+let map_fst f r = { r with push = fun (x,y) -> r.push (f x,y) }
+let map_snd f r = { r with push = fun (x,y) -> r.push (x,f y) }
+let filter_fst f = filter (fun (x,y) -> f x)
+let filter_snd f = filter (fun (x,y) -> f y)
+let filter_map_fst f r  = { r with push = fun (x,y) -> match f x with Some x' -> r.push (x',y) | None -> id }
+let filter_map_snd f r  = { r with push = fun (x,y) -> match f y with Some y' -> r.push (x,y') | None -> id }
+
 let monoid zero plus = {
   seed = zero;
   push = (fun x s -> plus s x);
