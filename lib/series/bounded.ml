@@ -14,6 +14,15 @@ let reduce r xs =
       r.term (xs.iter { r with push })
     )
 
+let fold push seed =
+  let open Reducer in
+  reduce {
+    seed;
+    push;
+    term = id;
+    full_check = None;
+  }
+
 let producer_of_source xs =
   let open Reducer in
   let iter r = 
