@@ -1,9 +1,7 @@
 module Json = Yojson.Safe
-module Result = Serialization.Result
+open Serialization.Result
 
 type json = Json.json
-
-open Serialization.Result
 
 module Decoder = struct
   type 'a decoder = json -> ('a,string) result
@@ -20,23 +18,23 @@ module Decoder = struct
   let int = function
     | `Int v -> Ok v
     | `Intlit v
-    | `String v -> Result.try_map int_of_string v
+    | `String v -> try_apply int_of_string v
     | json -> Error (Format.sprintf "not an int value: %s" (Json.pretty_to_string json))
 
   let int64 = function
     | `Int v -> Ok (Int64.of_int v)
     | `Intlit v
-    | `String v -> Result.try_map Int64.of_string v
+    | `String v -> try_apply Int64.of_string v
     | json -> Error (Format.sprintf "not an int value: %s" (Json.pretty_to_string json))
 
   let float = function
     | `Float v -> Ok v
-    | `String v -> Result.try_map float_of_string v
+    | `String v -> try_apply float_of_string v
     | json -> Error (Format.sprintf "not a float value: %s" (Json.pretty_to_string json))
 
   let bool = function
     | `Bool v -> Ok v
-    | `String v -> Result.try_map bool_of_string v
+    | `String v -> try_apply bool_of_string v
     | json -> Error (Format.sprintf "not a bool value: %s" (Json.pretty_to_string json))
 
   let unit = function
@@ -45,7 +43,7 @@ module Decoder = struct
 
   let list item_decoder = function
     | `List vs | `Tuple vs ->
-       result_list_map item_decoder vs
+       iter_apply item_decoder vs
        >>= fun items ->
        ok (Series.Bounded.of_list items)
     | json -> Error (Format.sprintf "not a list: %s" (Json.pretty_to_string json))

@@ -64,10 +64,44 @@ end
 
 module Result = struct
 
+  let ok s = Ok s
+  let error e = Error e
+
+  let map f = function
+    | Ok x -> Ok (f x)
+    | Error _ as e -> e  (* If the case is coded as `| e -> e`,
+                            Then the compiler wrongly infers the type of `map` as `('a -> 'a) -> 'a t -> 'a t` *)
+
+  let flat_map f = function
+    | Ok x -> f x
+    | Error _ as e -> e
+
+  let (>>=) r f = match r with
+    | Ok x -> f x
+    | Error _ as e -> e
+
+  let (>|=) r f = match r with
+    | Ok x -> Ok (f x)
+    | Error _ as e -> e
+
   let on_error f = function
     | Ok x -> x
     | Error e -> f e
 
+  let try_apply f g x =
+    try Ok (f x)
+    with e -> Error (g e)
+
+  let iter_apply f =
+    let rec loop rs = function
+      | [] -> Ok (List.rev rs)
+      | x::xs -> (
+        match f x with
+        | Ok r -> loop (r::rs) xs
+        | Error r -> Error r
+      )
+    in
+    loop []
 end
 
 module Either = struct
@@ -75,10 +109,12 @@ module Either = struct
 end
 
 module Time = struct
+
   let time_ms f x =
-  let t0 = Unix.gettimeofday () in                                                                                                                                                                         
-  let r = f x in
-  let t1 = Unix.gettimeofday () in
-  let d = (t1 -. t0) *. 1000.0 in
-  (int_of_float d,r)    
+    let t0 = Unix.gettimeofday () in                                                                                                                                                                         
+    let r = f x in
+    let t1 = Unix.gettimeofday () in
+    let d = (t1 -. t0) *. 1000.0 in
+    (int_of_float d,r)    
+
 end
