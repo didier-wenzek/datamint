@@ -41,7 +41,7 @@ val reduce_view: ('a,'b,'c) Reducer.t -> ('a,'s) collection -> ('c,'s) aggregate
 
 val map: ('a -> 'b) -> ('a,'s) producer -> ('b,'s) producer
 val filter: ('a -> bool) -> ('a,'s) producer -> ('a,'s) producer
-val filter_map: ('a -> 'a option) -> ('a,'s) producer -> ('a,'s) producer
+val filter_map: ('a -> 'b option) -> ('a,'s) producer -> ('b,'s) producer
 val flat_map: ('a -> 'b Bounded.producer) -> ('a,'s) producer -> ('b,'s) producer
 val unnest: ('a -> 'b Bounded.producer) -> ('a,'s) producer -> ('b*'a,'s) producer
 
