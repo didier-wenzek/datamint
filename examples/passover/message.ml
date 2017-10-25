@@ -20,6 +20,10 @@ let position_event_of_message (visitor, (room, timestamp)) =
 let position_message_of_event { visitor; room; timestamp } =
   (visitor, (room, timestamp))
 
+let visitor_of_event e = e.visitor
+let room_of_event e = e.room
+let timestamp_of_event e = e.timestamp
+
 let json = Generics.Json_support.format
 
 let position_of_json =
