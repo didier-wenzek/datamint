@@ -64,6 +64,10 @@ module Option = struct
   let combine op x y = match x,y with
     | Some x , Some y -> Some (op x y)
     | _ -> None
+
+  let of_result = function
+    | Ok x -> Some x
+    | _ -> None
 end
 
 module Result = struct
