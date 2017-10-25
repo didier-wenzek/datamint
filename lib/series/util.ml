@@ -60,6 +60,10 @@ module Option = struct
   let none_if_notfound f x =
     try Some (f x)
     with Not_found -> None
+
+  let combine op x y = match x,y with
+    | Some x , Some y -> Some (op x y)
+    | _ -> None
 end
 
 module Result = struct
