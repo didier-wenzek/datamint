@@ -1,0 +1,9 @@
+{ "visitor": "V001", "room": "R065", "timestamp": 1234567 }
+{ "visitor": "V001", "room": "R065", "timestamp": 1234667 }
+{ "visitor": "V002", "room": "R064", "timestamp": 1234668 }
+{ "visitor": "V002", "room": "R065", "timestamp": 1234768 }
+{ "visitor": "V002", "room": "R065", "timestamp": 1234868 }
+{ "visitor": "V002", "room": "R065", "timestamp": 1234968 }
+{ "visitor": "V002", "room": "R066", "timestamp": 1235168 }
+
+

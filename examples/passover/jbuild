@@ -1,0 +1,7 @@
+(jbuild_version 1)
+
+(executables
+ ((names (passover))
+  (libraries (datamint datamint.kafka datamint.kyoto lwt.unix str))
+  (public_names (passover))
+  (package datamint-examples)))
