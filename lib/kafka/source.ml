@@ -45,19 +45,21 @@ let extract_payload = function
   | Kafka.PartitionEnd (_, _, _) -> None
 
 let reduce_buffer con =
-  ignore (con.timeout_ms = min max_timeout_ms (con.timeout_ms * 2));
-  ignore (con.msg_count = max min_msg_count (con.msg_count / 2))
+  con.msg_count <- max min_msg_count (con.msg_count / 2);
+  con.timeout_ms <- min max_timeout_ms (con.timeout_ms * 2)
 
 let enlarge_buffer con =
-  ignore (con.msg_count = min max_msg_count (con.msg_count * 2));
-  ignore (con.timeout_ms = max min_timeout_ms (con.timeout_ms / 2))
+  con.msg_count <- min max_msg_count (con.msg_count * 2);
+  con.timeout_ms <- max min_timeout_ms (con.timeout_ms / 2)
 
 let adjust_buffer_size con received =
   if received < con.msg_count / 2
-  then reduce_buffer con
+  then
+    reduce_buffer con
   else
     if received = con.msg_count
-    then enlarge_buffer con
+    then
+      enlarge_buffer con
 
 let rec consume_batch con =
   let timeout_ms = con.timeout_ms in
