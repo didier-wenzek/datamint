@@ -80,17 +80,7 @@ let store_kyoto_plain cluster =
   let encode_value = id in
   let decode_value = id in
   fun file_path ->
-    let file_path = file_path |> add_process_id cluster |> add_working_dir cluster in
-    KyotoCabinet.KVStore.store ~encode_key ~decode_key ~encode_value ~decode_value ~file_path
-    |> Dataset.persist_state
-
-let store_kyoto_string_int cluster =
-  let encode_key = id in
-  let decode_key = id in
-  let encode_value = string_of_int in
-  let decode_value = int_of_string in
-  fun file_path ->
-    let file_path = file_path |> add_process_id cluster |> add_working_dir cluster in
+    let file_path = file_path |> add_process_id cluster in
     KyotoCabinet.KVStore.store ~encode_key ~decode_key ~encode_value ~decode_value ~file_path
     |> Dataset.persist_state
 
@@ -114,10 +104,14 @@ let decode_position_messages cluster =
 
 let update_current_visitor_room cluster =
   consume_topic cluster "passover.positions.events"
+  (* |> Dataset.map (fun x -> Printf.printf "XOXOX: event = %s\n%!" x; x) *)
   |> Dataset.map position_of_json
   |> Dataset.filter_map Option.of_result
   |> Dataset.group visitor_of_event room_of_event most_recent
   |> store_kyoto_plain cluster "visitor_room.kct" 
+(*
+  |> Dataset.log (Store.file_logger (fun e -> Printf.sprintf "%s -> %s" e.visitor e.room) "events.log")
+ *)
   |> run cluster "update_current_visitor_room"
 
 let runner kafka_host working_dir partition partition_count =
