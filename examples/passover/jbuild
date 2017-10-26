@@ -2,6 +2,6 @@
 
 (executables
  ((names (passover))
-  (libraries (datamint datamint.kafka datamint.kyoto lwt.unix str))
+  (libraries (datamint datamint.kafka datamint.kyoto lwt.unix str cmdliner))
   (public_names (passover))
   (package datamint-examples)))
