@@ -310,3 +310,4 @@ let unique r =
     full_check = None;
   }
 
+let sum = commutative_monoid 0 (+)

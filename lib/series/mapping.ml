@@ -179,10 +179,14 @@ module Base = struct
     Bounded.reduce (apply_update_reducer m) updates
 
   let commit_updates m =
-    let source = m.source.update (updates m) in
-    let () = Hashtbl.clear m.replaced in
-    let () = Hashtbl.clear m.removed in
-    { m with source }
+    let updates = updates m in
+    if Bounded.is_empty updates
+    then m
+    else 
+      let source = m.source.update updates in
+      let () = Hashtbl.clear m.replaced in
+      let () = Hashtbl.clear m.removed in
+      { m with source }
 
   let rollback_updates m =
     let () = Hashtbl.clear m.replaced in

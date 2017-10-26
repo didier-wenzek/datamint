@@ -104,6 +104,7 @@ let filter_map_snd f xs = { iter = fun r -> xs.iter (Reducer.filter_map_snd f r)
 let forall p xs = xs |> map p |> reduce Reducer.and_reducer
 let exists p xs = xs |> map p |> reduce Reducer.or_reducer
 let is_empty xs = forall (fun _ -> false) xs
+let length xs = xs |> map (fun _ -> 1) |> reduce Reducer.sum
 
 let empty = { iter = fun r -> Reducer.(r.seed) }
 let singleton x = { iter = fun r -> Reducer.(r.seed |> r.push x) }
