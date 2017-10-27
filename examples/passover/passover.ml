@@ -101,6 +101,20 @@ let most_recent =      (* FIXME: should take the most recent, not the last provi
     full_check = None;
   }
 
+type 'a update =
+  | Insert of 'a
+  | Remove of 'a
+
+let new_visitor_position x = Insert x
+let old_visitor_position x = Remove x
+
+let key_of_move = function
+  | Insert (v,r) | Remove (v,r) -> v
+
+let string_of_move = function
+  | Insert (v,r) -> Format.sprintf "+(%s,%s)" v r
+  | Remove (v,r) -> Format.sprintf "-(%s,%s)" v r
+
 let decode_position_messages cluster =
   consume_topic cluster "passover.positions.messages"
   |> Dataset.map position_of_json
@@ -112,8 +126,9 @@ let update_current_visitor_room cluster =
   consume_topic cluster "passover.positions.events"
   |> Dataset.map position_of_json
   |> Dataset.filter_map Option.of_result
-  |> Dataset.group visitor_of_event room_of_event most_recent
+  |> Dataset.group_updates visitor_of_event room_of_event most_recent new_visitor_position old_visitor_position
   |> store_kyoto_plain cluster "visitor_room.kct" 
+  |> produce_topic cluster "passover.visitors.moves" key_of_move string_of_move
   |> run cluster "update_current_visitor_room"
 
 let runner kafka_host working_dir partition partition_count =

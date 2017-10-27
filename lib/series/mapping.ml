@@ -304,17 +304,25 @@ let group key value v_red =
 let group_updates extract_key extract_value red insert rem =
   let open Reducer in
   let view = red.term in
-  let adapt_push push x (kvs,acc) =
-    let k = extract_key x in
-    let v = extract_value x in
-    let v0, acc = match value kvs k with
-      | None -> red.seed, acc
-      | Some v0 -> v0, push (rem (k,view v0)) acc
+  let adapt_push push kv (kvs,acc) =
+    let k = extract_key kv in
+    let v = extract_value kv in
+    let v0, is_new = match value kvs k with
+      | None -> red.seed, true
+      | Some v0 -> v0, false
     in
     let v1 = red.push v v0 in
-    let acc = push (insert (k,view v1)) acc in
-    let kvs = replace (k,v1) kvs in
-    (kvs,acc)
+    if v1 = v0
+    then
+      (kvs,acc)
+    else
+      let kvs = replace (k,v1) kvs in
+      let acc =
+        if is_new then acc
+        else push (rem (k,view v0)) acc
+      in
+      let acc = push (insert (k,view v1)) acc in
+      (kvs,acc)
   in
   let adapt_term push term (kvs,acc) =
     term acc
