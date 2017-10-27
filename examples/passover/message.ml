@@ -33,4 +33,39 @@ let position_of_json =
 let json_of_position =
   position_message_of_event
   >> Generics.Serialization.format_encoder json position_message
-  >> Result.on_error (fun e -> raise (invalid_arg e))
+  >> Result.on_error (fun e -> assert false)
+
+type 'a update =
+  | Insert of 'a
+  | Remove of 'a
+
+let insert x = Insert x
+let remove x = Remove x
+
+let move_message =
+  let open Generics.Repr in
+  record (
+    field "visitor" string
+  & field "room" string
+  )
+
+let move_of_json =
+  Generics.Serialization.format_decoder json move_message
+
+let json_of_move =
+  Generics.Serialization.format_encoder json move_message
+  >> Result.on_error (fun e -> assert false)
+
+let string_of_move = function
+  | Insert v -> Format.sprintf "+ %s" (json_of_move v)
+  | Remove v -> Format.sprintf "- %s" (json_of_move v)
+
+let move_of_string s =
+  let c = String.sub s 0 1 in
+  let v = move_of_json (String.sub s 1 ((String.length s) - 1)) in
+  if c = "-"
+  then Result.map remove v
+  else Result.map insert v
+  
+  
+

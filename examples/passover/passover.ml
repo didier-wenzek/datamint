@@ -92,6 +92,16 @@ let store_kyoto_plain cluster =
     KyotoCabinet.KVStore.store ~encode_key ~decode_key ~encode_value ~decode_value ~file_path
     |> Dataset.persist_state
 
+let store_kyoto_int cluster =
+  let encode_key = id in
+  let decode_key = id in
+  let encode_value = string_of_int in
+  let decode_value = int_of_string in
+  fun file_path ->
+    let file_path = file_path |> add_process_id cluster in
+    KyotoCabinet.KVStore.store ~encode_key ~decode_key ~encode_value ~decode_value ~file_path
+    |> Dataset.persist_state
+
 let most_recent =      (* FIXME: should take the most recent, not the last provided value *)
   let open Reducer in
   {                                                                                                                                                                                               
@@ -101,19 +111,25 @@ let most_recent =      (* FIXME: should take the most recent, not the last provi
     full_check = None;
   }
 
-type 'a update =
-  | Insert of 'a
-  | Remove of 'a
-
-let new_visitor_position x = Insert x
-let old_visitor_position x = Remove x
-
-let key_of_move = function
+let visitor_of_move = function
   | Insert (v,r) | Remove (v,r) -> v
 
-let string_of_move = function
-  | Insert (v,r) -> Format.sprintf "+(%s,%s)" v r
-  | Remove (v,r) -> Format.sprintf "-(%s,%s)" v r
+let room_of_move = function
+  | Insert (v,r) | Remove (v,r) -> r
+
+let count_update_of_move = function
+  | Insert (v,r) -> 1
+  | Remove (v,r) -> -1
+
+
+let filter_insert = function
+  | Insert i -> Some i
+  | _ -> None
+
+let key_of_count (r,c) = r
+
+let string_of_count (r,c) =
+  Printf.sprintf "{ \"room\": \"%s\", \"count\": %d }" r c
 
 let decode_position_messages cluster =
   consume_topic cluster "passover.positions.messages"
@@ -126,10 +142,20 @@ let update_current_visitor_room cluster =
   consume_topic cluster "passover.positions.events"
   |> Dataset.map position_of_json
   |> Dataset.filter_map Option.of_result
-  |> Dataset.group_updates visitor_of_event room_of_event most_recent new_visitor_position old_visitor_position
+  |> Dataset.group_updates visitor_of_event room_of_event most_recent insert remove
   |> store_kyoto_plain cluster "visitor_room.kct" 
-  |> produce_topic cluster "passover.visitors.moves" key_of_move string_of_move
+  |> produce_topic cluster "passover.visitors.moves" room_of_move string_of_move
   |> run cluster "update_current_visitor_room"
+
+let count_room_visitors cluster =
+  consume_topic cluster "passover.visitors.moves"
+  |> Dataset.map move_of_string
+  |> trace_errors
+  |> Dataset.group_updates room_of_move count_update_of_move Reducer.sum insert remove
+  |> store_kyoto_int cluster "room_visitor_count.kct" 
+  |> Dataset.filter_map filter_insert
+  |> produce_topic cluster "passover.rooms.visitorcounts" key_of_count string_of_count
+  |> run cluster "count_room_visitors"
 
 let runner kafka_host working_dir partition partition_count =
   let cluster =
@@ -140,6 +166,7 @@ let runner kafka_host working_dir partition partition_count =
     Lwt.join [
       decode_position_messages cluster;
       update_current_visitor_room cluster;
+      count_room_visitors cluster;
   ])
 
 let runner_t =
