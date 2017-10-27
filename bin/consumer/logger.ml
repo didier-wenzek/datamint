@@ -8,6 +8,7 @@ type logger_kind =
   | Stdout
   | Stderr
   | File of string
+  | Kafka of string
   [@@deriving sexp]
 
 type config = topic * logger_kind
@@ -23,6 +24,7 @@ let logger_of_kind = function
   | Stdout -> Lwt.return stdout
   | Stderr -> Lwt.return stderr
   | File path -> file path
+  | Kafka topic -> Lwt.return (Kafka_logger.topic_logger topic)
 
 module Dict = Map.Make(String)
 

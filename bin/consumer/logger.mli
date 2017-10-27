@@ -6,6 +6,7 @@ type logger_kind =
   | Stdout
   | Stderr
   | File of string
+  | Kafka of string
   [@@deriving sexp]
 
 type config = topic * logger_kind

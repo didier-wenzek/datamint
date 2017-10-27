@@ -2,7 +2,7 @@
 <meta charset="utf-8">
 <body>
 <script>
-  var ws = new WebSocket('ws://localhost:8001/events/c');
+  var ws = new WebSocket('ws://localhost:8001/events/positions');
   ws.onopen = function() {
     console.log('Websocket opened');
   };
@@ -23,6 +23,6 @@
 </script>
 Websocket events are logged into the console !
 
-<br/><input type="text" id="event" value="event content" size="80"/>
+<br/><input type="text" id="event" value='{ "visitor": "V001", "room": "R065", "timestamp": 1234567 }' size="80"/>
 <br/><button onclick="send_event()">Send event</button> 
 </body>
