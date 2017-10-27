@@ -1,7 +1,11 @@
 open Series
 open Util
 
-let with_db path = Kyoto.with_db path [Kyoto.OREADER; Kyoto.ONOLOCK] 
+let with_db path =
+  Kyoto.with_db path [Kyoto.OREADER; Kyoto.ONOLOCK] 
+
+let create_db path =
+  Kyoto.with_db path [Kyoto.OWRITER; Kyoto.OCREATE] ignore
 
 let iter_pairs path push seed =
   let push_pair acc kv = push kv acc in
@@ -61,7 +65,9 @@ let update_reducer encode_key encode_value path =
     | Mapping.Remove k ->
       Kyoto.remove db (encode_key k); db
   in
-  let term = Kyoto.commit_tran in
+  let term =
+    Kyoto.commit_tran
+  in
   let full_check = None in
   Reducer.of_buffer ~init ~term ~push ~full_check
 
@@ -84,11 +90,10 @@ let mapping encode_key decode_key encode_value decode_value path =
 let store ~encode_key ~decode_key ~encode_value ~decode_value ~file_path dir_path =
   let path = Filename.concat dir_path file_path in
   let read_content _ =
-    mapping encode_key decode_key encode_value decode_value path
-    |> Lwt.return
+    Lwt.wrap (fun () -> mapping encode_key decode_key encode_value decode_value path)
   in
   let write_content mapping =
-    Mapping.commit_updates mapping
-    |> Lwt.return
+    Lwt.wrap (fun () -> Mapping.commit_updates mapping)
   in
+  create_db path;
   Store.{ read_content; write_content; }
