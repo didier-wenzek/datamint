@@ -69,6 +69,14 @@ let add_working_dir cluster path =
   then Filename.concat cluster.working_dir path
   else path
 
+let trace_errors xs =
+  Dataset.filter_map (function
+    | Ok x -> Some x
+    | Error e ->
+      Printf.eprintf "ERROR: %s\n%!" e;
+      None
+  ) xs
+
 let run cluster name =
   let dir = cluster.working_dir in
   let name = add_process_id cluster name in
@@ -96,7 +104,7 @@ let most_recent =      (* FIXME: should take the most recent, not the last provi
 let decode_position_messages cluster =
   consume_topic cluster "passover.positions.messages"
   |> Dataset.map position_of_json
-  |> Dataset.filter_map Option.of_result
+  |> trace_errors
   |> Dataset.map json_of_position
   |> Dataset.filter_map Option.of_result
   |> produce_topic cluster "passover.positions.events"  (* FIXME: should assign a partition *)
