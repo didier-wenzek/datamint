@@ -45,9 +45,9 @@ let consume_topic cluster topic =
   let partition = cluster.partition in
   KafkaStore.Source.kafka_partition ~host ~topic ~partition
 
-let produce_topic cluster topic =
+let produce_topic cluster topic key encode =
   let host = cluster.kafka_host in
-  Dataset.log (KafkaStore.Sink.log_to_topic ~host ~topic)
+  Dataset.log (KafkaStore.Sink.log_to_topic_partition ~host ~topic ~key ~encode)
 
 let prepare cluster =
   Lwt.catch
@@ -105,21 +105,15 @@ let decode_position_messages cluster =
   consume_topic cluster "passover.positions.messages"
   |> Dataset.map position_of_json
   |> trace_errors
-  |> Dataset.map json_of_position
-  |> Dataset.filter_map Option.of_result
-  |> produce_topic cluster "passover.positions.events"  (* FIXME: should assign a partition *)
+  |> produce_topic cluster "passover.positions.events" visitor_of_event json_of_position
   |> run cluster "decode_position_messages"
 
 let update_current_visitor_room cluster =
   consume_topic cluster "passover.positions.events"
-  (* |> Dataset.map (fun x -> Printf.printf "XOXOX: event = %s\n%!" x; x) *)
   |> Dataset.map position_of_json
   |> Dataset.filter_map Option.of_result
   |> Dataset.group visitor_of_event room_of_event most_recent
   |> store_kyoto_plain cluster "visitor_room.kct" 
-(*
-  |> Dataset.log (Store.file_logger (fun e -> Printf.sprintf "%s -> %s" e.visitor e.room) "events.log")
- *)
   |> run cluster "update_current_visitor_room"
 
 let runner kafka_host working_dir partition partition_count =

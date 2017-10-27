@@ -33,3 +33,4 @@ let position_of_json =
 let json_of_position =
   position_message_of_event
   >> Generics.Serialization.format_encoder json position_message
+  >> Result.on_error (fun e -> raise (invalid_arg e))
