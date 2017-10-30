@@ -40,6 +40,13 @@ type cluster_info = {
   partition_count: int;
 }
 
+module Topic = struct
+  let positions_messages = "passover-positions-messages"
+  let positions_events = "passover-positions-events"
+  let visitors_moves = "passover-visitors-moves"
+  let rooms_visitorcounts = "passover-rooms-visitorcounts"
+end
+
 let consume_topic cluster topic =
   let host = cluster.kafka_host in
   let partition = cluster.partition in
@@ -132,29 +139,29 @@ let string_of_count (r,c) =
   Printf.sprintf "{ \"room\": \"%s\", \"count\": %d }" r c
 
 let decode_position_messages cluster =
-  consume_topic cluster "passover.positions.messages"
+  consume_topic cluster Topic.positions_messages
   |> Dataset.map position_of_json
   |> trace_errors
-  |> produce_topic cluster "passover.positions.events" visitor_of_event json_of_position
+  |> produce_topic cluster Topic.positions_events visitor_of_event json_of_position
   |> run cluster "decode_position_messages"
 
 let update_current_visitor_room cluster =
-  consume_topic cluster "passover.positions.events"
+  consume_topic cluster Topic.positions_events
   |> Dataset.map position_of_json
   |> Dataset.filter_map Option.of_result
   |> Dataset.group_updates visitor_of_event room_of_event most_recent insert remove
   |> store_kyoto_plain cluster "visitor_room.kct" 
-  |> produce_topic cluster "passover.visitors.moves" room_of_move string_of_move
+  |> produce_topic cluster Topic.visitors_moves room_of_move string_of_move
   |> run cluster "update_current_visitor_room"
 
 let count_room_visitors cluster =
-  consume_topic cluster "passover.visitors.moves"
+  consume_topic cluster Topic.visitors_moves
   |> Dataset.map move_of_string
   |> trace_errors
   |> Dataset.group_updates room_of_move count_update_of_move Reducer.sum insert remove
   |> store_kyoto_int cluster "room_visitor_count.kct" 
   |> Dataset.filter_map filter_insert
-  |> produce_topic cluster "passover.rooms.visitorcounts" key_of_count string_of_count
+  |> produce_topic cluster Topic.rooms_visitorcounts key_of_count string_of_count
   |> run cluster "count_room_visitors"
 
 let runner kafka_host working_dir partition partition_count =
