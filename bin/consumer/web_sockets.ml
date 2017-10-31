@@ -33,7 +33,7 @@ let client_loop client resource logger =
 let callback loggers client =
   let req = Connected_client.http_request client in
   let resource = Uri.path (Request.uri req) in
-  match Resource.find loggers resource with
+  match Resource.Env.find loggers resource with
   | None -> Lwt.fail Not_found
   | Some (Resource.Logger logger) -> 
     client_loop client resource logger ()

@@ -14,7 +14,7 @@ let config_of_sexp s =
 
 let log loggers req body =
   let topic = Uri.path (Request.uri req) in
-  match Resource.find loggers topic with
+  match Resource.Env.find loggers topic with
   | None -> Lwt.fail Not_found
   | Some (Resource.Logger callback) -> (
     Cohttp_lwt.Body.to_string body
