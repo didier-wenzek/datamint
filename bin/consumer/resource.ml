@@ -3,7 +3,7 @@ open Lwt.Infix
 
 type name = string
 
-type resource =
+type t =
   | Logger of Logger.logger
   | Publisher of Publisher.publisher
 

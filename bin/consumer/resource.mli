@@ -1,6 +1,6 @@
 type name = string
 
-type resource =
+type t =
   | Logger of Logger.logger
   | Publisher of Publisher.publisher
 
@@ -14,6 +14,6 @@ module Env : sig
 end
 
 val open_resources:
-     (name * Logger.logger_kind) list
-  -> (name * Publisher.publisher_kind) list
-  -> resource Env.t Lwt.t
+     Logger.config list
+  -> Publisher.config list
+  -> t Env.t Lwt.t
