@@ -5,7 +5,7 @@
   (package datamint)
   (public_names (datamint-event-logger))
   (preprocess (pps (ppx_sexp_conv ppx_driver.runner)))
-  (libraries (datamint cmdliner sexplib cohttp-lwt-unix websocket-lwt kafka))))
+  (libraries (datamint cmdliner sexplib cohttp-lwt-unix websocket-lwt kafka datamint.kafka))))
 
 (install
   ((section bin)

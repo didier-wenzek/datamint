@@ -3,7 +3,32 @@
 <html>
 <head>
   <script>
-    var ws = new WebSocket('ws://localhost:8001/events/positions');
+    var ws_pub = new WebSocket('ws://localhost:8001/events/positions');
+    var ws_sub = new WebSocket('ws://localhost:8001/rooms/visitors/count');
+
+    ws_sub.onmessage = function(event) {
+      console.log('Msg received: ' + event.data);
+    };
+
+    ws_pub.onopen = function() {
+      console.log('Websocket pub opened');
+    };
+    ws_pub.onerror = function(error) {
+      console.log('Websocket pub error: ' + error.data);
+    };
+    ws_pub.onclose = function() {
+      console.log('Websocket pub closed');
+    };
+
+    ws_sub.onopen = function() {
+      console.log('Websocket sub opened');
+    };
+    ws_sub.onerror = function(error) {
+      console.log('Websocket sub error: ' + error.data);
+    };
+    ws_sub.onclose = function() {
+      console.log('Websocket sub closed');
+    };
 
     function send_position(visitor,x,y) {
       x = Math.trunc(x / 200);
@@ -12,7 +37,8 @@
       room = "R"+ x + "." + y;
       e = '{ "visitor": "'+ visitor +'", "room": "'+ room +'", "timestamp": '+ timestamp +' }';
     
-      ws.send(e);
+      ws_pub.send(e);
+      console.log('Msg sent: ' + e);
     };
 
     function position(e) {

@@ -74,13 +74,19 @@ let next_messages_from_partition con offset =
   init_partition_connection con offset;
   consume_batch con
 
-let messages_of_partition ~host ~topic ~partition =
+let source_of_partition ~host ~topic ~partition =
   let con = connect_partition host topic partition in
-  Unbounded.(of_source {
+  Unbounded.{
     next_chunk = next_messages_from_partition con;
     index_reducer = partition_offset_reducer;
   }
-)
+
+let source_of_topic ~host ~topic =
+  let partition = 0 in (* FIXME *)
+  source_of_partition ~host ~topic ~partition
+
+let messages_of_partition ~host ~topic ~partition =
+  Unbounded.of_source (source_of_partition ~host ~topic ~partition)
 
 let kafka_partition ~host ~topic ~partition =
   Incremental_value.of_unbounded (messages_of_partition host topic partition)

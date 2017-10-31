@@ -15,7 +15,7 @@ let config_of_sexp s =
 let log_frame logger client resource frame =
   logger resource frame.Websocket.Frame.content
 
-let client_loop client resource logger =
+let logger_loop client resource logger =
   let rec loop () =
     Connected_client.recv client
     >>= fun frame -> 
@@ -28,7 +28,14 @@ let client_loop client resource logger =
     | Close -> Lwt.return_unit
     | _ -> loop ()
   in
-  loop
+  loop ()
+
+let publisher_loop client resource publisher =
+  let push message =
+    let frame = Websocket.Frame.create ~content:message () in
+    Websocket_lwt.Connected_client.send client frame
+  in
+  publisher push
 
 let callback loggers client =
   let req = Connected_client.http_request client in
@@ -36,9 +43,9 @@ let callback loggers client =
   match Resource.Env.find loggers resource with
   | None -> Lwt.fail Not_found
   | Some (Resource.Logger logger) -> 
-    client_loop client resource logger ()
+    logger_loop client resource logger
   | Some (Resource.Publisher publisher) -> 
-    assert false (* FIXME: Not yet implemented *)
+    publisher_loop client resource publisher
 
 let server config loggers =
   let mode = `TCP (`Port config.port) in

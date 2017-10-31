@@ -9,7 +9,7 @@ type publisher_kind =
 type config = resource * publisher_kind
   [@@deriving sexp]
 
-type publisher = unit
+type publisher = (string -> unit Lwt.t) -> unit Lwt.t
 
-let make_publisher publisher_kind =
-  Lwt.return_unit
+let make_publisher = function
+  | Kafka topic -> Lwt.return (Kafka_publisher.topic_publisher topic)

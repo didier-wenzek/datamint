@@ -6,6 +6,6 @@ type publisher_kind =
 type config = resource * publisher_kind
   [@@deriving sexp]
 
-type publisher
+type publisher = (string -> unit Lwt.t) -> unit Lwt.t
 
 val make_publisher: publisher_kind -> publisher Lwt.t
