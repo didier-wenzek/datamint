@@ -1,5 +1,6 @@
 open Sexplib
 open Sexplib.Std
+open Lwt.Infix
 
 type endpoint =
   | Http of Http.config
@@ -12,11 +13,8 @@ type config =
     publishers: Publisher.config list;
   } [@@deriving sexp]
 
-let open_loggers config =
-  Resource.open_resources Logger.make_logger config.loggers
-
-let open_publishers config =
-  Resource.open_resources Publisher.make_publisher config.publishers
+let open_resources config =
+  Resource.open_resources config.loggers config.publishers
 
 let endpoint_server = function
   | Http config -> Http.server config

@@ -35,8 +35,10 @@ let callback loggers client =
   let resource = Uri.path (Request.uri req) in
   match Resource.find loggers resource with
   | None -> Lwt.fail Not_found
-  | Some logger -> 
+  | Some (Resource.Logger logger) -> 
     client_loop client resource logger ()
+  | Some (Resource.Publisher publisher) -> 
+    assert false (* FIXME: Not yet implemented *)
 
 let server config loggers =
   let mode = `TCP (`Port config.port) in

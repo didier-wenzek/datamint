@@ -15,13 +15,13 @@ let conf_file =
   let doc = "Configuration file" in
   Arg.(required & pos 0 (some string) None & info [] ~docv:"CONF_FILE" ~doc)
 
-let launch_threads threads loggers =
+let launch_threads threads resources =
   threads
-  |> List.map (fun launch -> launch loggers)
+  |> List.map (fun thread -> thread resources)
   |> Lwt.join
 
 let launch_server config =
-  Config.open_loggers config
+  Config.open_resources config
   >>=
   launch_threads (Config.endpoints config)
 

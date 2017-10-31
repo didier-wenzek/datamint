@@ -7,6 +7,10 @@ type 'a t = {
   default: 'a option;
 }
 
+type resource =
+  | Logger of Logger.logger
+  | Publisher of Publisher.publisher
+
 let empty = {
   values = Dict.empty;
   default = None;
@@ -42,15 +46,27 @@ let add_resources open_resource =
     >|= fun res ->
     add_resource_or_default name res env
   in
-  let rec add_resources env = function
+  let rec loop confs env = match confs with
     | [] -> Lwt.return env
     | conf::confs -> (
       add_resource env conf
-      >>= fun env ->
-      add_resources env confs
+      >>=
+      loop confs
     )
   in
-  add_resources
+  loop
 
-let open_resources open_resource =
-  add_resources open_resource empty
+let open_logger conf =
+  Logger.make_logger conf
+  >|= fun l ->
+  Logger l
+
+let open_publisher conf =
+  Publisher.make_publisher conf
+  >|= fun p ->
+  Publisher p
+
+let open_resources loggers publishers =
+  empty
+  |>  add_resources open_logger loggers
+  >>= add_resources open_publisher publishers

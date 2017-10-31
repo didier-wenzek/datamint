@@ -16,10 +16,12 @@ let log loggers req body =
   let topic = Uri.path (Request.uri req) in
   match Resource.find loggers topic with
   | None -> Lwt.fail Not_found
-  | Some callback -> (
+  | Some (Resource.Logger callback) -> (
     Cohttp_lwt.Body.to_string body
     >>= callback topic
   )
+  | Some (Resource.Publisher publisher) -> 
+    assert false (* FIXME: Not yet implemented *)
     
 let callback loggers _conn req body =
   try_bind
