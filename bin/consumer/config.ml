@@ -9,6 +9,7 @@ type endpoint =
 type config =
   { endpoints: endpoint list;
     loggers: Logger.config list;
+    publishers: Publisher.config list;
   } [@@deriving sexp]
 
 let open_loggers config =

@@ -1,8 +1,8 @@
 open Sexplib.Std
 
-type topic = string [@@deriving sexp]
+type resource = string [@@deriving sexp]
 type event = string [@@deriving sexp]
-type logger = topic -> event -> unit Lwt.t
+type logger = resource -> event -> unit Lwt.t
 
 type logger_kind =
   | Stdout
@@ -11,7 +11,7 @@ type logger_kind =
   | Kafka of string
   [@@deriving sexp]
 
-type config = topic * logger_kind
+type config = resource * logger_kind
   [@@deriving sexp]
 
 let stdout = Lwt_io.printf "%s: %s\n%!"
@@ -39,19 +39,19 @@ module Env = struct
     default = None;
   }
 
-  let add_logger topic logger env = {
+  let add_logger resource logger env = {
     env with
-    loggers = Dict.add topic logger env.loggers
+    loggers = Dict.add resource logger env.loggers
   }
 
   let set_default_logger default env = {
     env with default;
   }
 
-  let add_logger_or_default topic logger env =
-    if topic = "*"
+  let add_logger_or_default resource logger env =
+    if resource = "*"
     then set_default_logger (Some logger) env
-    else add_logger topic logger env
+    else add_logger resource logger env
 
   let find env t =
     try
@@ -59,10 +59,10 @@ module Env = struct
     with
       Not_found -> env.default
 
-  let add_config env (topic,kind) =
+  let add_config env (resource,kind) =
     logger_of_kind kind
     >|= fun logger ->
-    add_logger_or_default topic logger env
+    add_logger_or_default resource logger env
 
   let rec add_configs env = function
     | [] -> Lwt.return env
