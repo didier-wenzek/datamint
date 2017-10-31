@@ -5,7 +5,7 @@ let connect_topic kafka_cluster topic_name =
   let topic = Kafka.new_topic handler topic_name topic_options in
   (handler, topic)
 
-let log_event topic _ event =
+let log_event topic _resource event =
   Lwt.wrap (fun () -> Kafka.produce topic Kafka.partition_unassigned event)
 
 let topic_logger topic =

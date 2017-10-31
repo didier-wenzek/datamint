@@ -13,7 +13,10 @@ type config =
   } [@@deriving sexp]
 
 let open_loggers config =
-  Logger.Env.open_configs config.loggers
+  Resource.open_resources Logger.make_logger config.loggers
+
+let open_publishers config =
+  Resource.open_resources Publisher.make_publisher config.publishers
 
 let endpoint_server = function
   | Http config -> Http.server config
