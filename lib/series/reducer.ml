@@ -311,3 +311,10 @@ let unique r =
   }
 
 let sum = commutative_monoid 0 (+)
+
+let void c = {
+  seed = ();
+  push = (fun _ () -> ());
+  term = (fun () -> c);
+  full_check = Some (fun () -> true);
+}
