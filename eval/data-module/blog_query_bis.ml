@@ -1,7 +1,64 @@
+module type Monoid = sig
+  type 'a t
+  type 'a elt
+
+  val empty: 'a t
+  val single: 'a elt -> 'a t
+  val merge: 'a t -> 'a t -> 'a t
+end
+
+module Sum : Monoid
+  with type 'a elt = int
+= struct
+  type 'a t = int
+  type 'a elt = int
+
+  let empty = 0
+  let single x = x
+  let merge = (+)
+end
+
+module Count : Monoid
+  with type 'a elt = 'a
+= struct
+  type 'a t = int
+  type 'a elt = 'a
+
+  let empty = 0
+  let single x = 1
+  let merge = (+)
+end
+
+module Col : Monoid
+  with type 'a elt = 'a
+= struct
+  type 'a t = Empty | Single of 'a | Merge of 'a t * 'a t
+  type 'a elt = 'a
+
+  let empty = Empty
+  let single x = Single x
+  let merge a b = Merge (a,b)
+end
+
+module Group(K: Map.OrderedType)(M: Monoid) : Monoid
+  with type 'a elt = K.t * 'a M.elt
+= struct
+  module G = Map.Make(K) 
+
+  type 'a t = 'a M.t G.t
+  type 'a elt = K.t * 'a M.elt
+
+  let empty = G.empty
+  let single (k,v) = G.singleton k (M.single v)
+  let merge kvs = G.merge (fun k a b -> match a,b with
+    | Some a, Some b -> Some (M.merge a b)
+    | None, s | s, None -> s
+  ) kvs
+end
+
 module type S = sig
   type ('a,'b) relation
   type 'a collection
-  type 'a value
   type ('a,'b) reducer
 
   val eq: ('a,'a) relation
@@ -14,19 +71,19 @@ module type S = sig
   val (<=>): ('a,'b) relation -> ('b,'c) relation -> ('a,'c) relation
   val inverse: ('a,'b) relation -> ('b,'a) relation
 
-  val select: 'a -> 'a value
-  val group: 'a -> 'b -> ('a*'b) value
-  val reduce: ('a,'b) reducer -> 'a value -> 'b value
-  val reduce_group: ('a,'b) reducer -> ('c*'a) value -> ('c*'b) value
-  val count: ('a,int) reducer
+  module Reduce (M: Monoid) : sig
+    type 'a value = 'a M.t
 
-  val generate: ('a,'b) relation -> ('a -> 'b -> 'c value) -> 'c value          (* FIXME: there are missing information           *)
-  val map:      ('a,'b) relation -> 'a -> ('b -> 'c value) -> 'c value          (*        - what to do when the result is empty ? *)
-  val inv_map:  ('a,'b) relation -> 'b -> ('a -> 'c value) -> 'c value          (*        - how to combine two results ?          *) 
-  val filter:   ('a,'b) relation -> 'a -> 'b -> (unit-> 'c value) -> 'c value   (* Can we use implicit module ?                   *)
+    val select: 'a M.elt -> 'a value
 
-  val generate_members: ('a) collection -> ('a -> 'b value) -> 'b value
-  val filter_members:   ('a) collection -> 'a -> (unit -> 'b value) -> 'b value
+    val generate: ('a,'b) relation -> ('a -> 'b -> 'c value) -> 'c value
+    val map:      ('a,'b) relation -> 'a -> ('b -> 'c value) -> 'c value
+    val inv_map:  ('a,'b) relation -> 'b -> ('a -> 'c value) -> 'c value
+    val filter:   ('a,'b) relation -> 'a -> 'b -> (unit-> 'c value) -> 'c value
+
+    val generate_members: ('a) collection -> ('a -> 'b value) -> 'b value
+    val filter_members:   ('a) collection -> 'a -> (unit -> 'b value) -> 'b value
+  end
 end
 
 type uuid = string
@@ -83,7 +140,10 @@ module Comp(Schema: BS) = struct
     let comments = inverse Comment.post
   end
 
+  module Collect = Reduce(Col)
+
   let posts_of_author name =
+    let open Collect in
     inv_map Author.name name $$ fun author ->
     inv_map Post.author author $$ fun post ->
     map Post.uuid post $$ fun uuid ->
@@ -92,6 +152,7 @@ module Comp(Schema: BS) = struct
     select (uuid,title,date)
 
   let posts_of_tag tag =
+    let open Collect in
     inv_map Post.tags tag $$ fun post ->
     map (Post.author <=> Author.name) post $$ fun author_name ->
     map Post.uuid post $$ fun uuid ->
@@ -100,19 +161,26 @@ module Comp(Schema: BS) = struct
     select (uuid,author_name,title,date)
 
   let authors_commenting_their_posts =
+    let open Collect in
     generate (Author.posts <=> Post.comments <=> Comment.author) $$ fun post_author comment_author ->
     filter eq post_author comment_author $$ fun () ->
     map Author.name post_author $$ fun author_name ->
     select author_name
 
+  module ReduceCount = Reduce(Count)
+
   let count_of_posts =
+    let open ReduceCount in
     generate_members posts $$ fun post ->
     select post
-    |> reduce count
+
+  module GroupCount = Group(String)(Count)
+  module ReduceGroupCount = Reduce(GroupCount)
 
   let count_of_posts_per_author =
+    let open ReduceGroupCount in
     generate Author.posts $$ fun author post ->
-    group author post
-    |> reduce_group count
+    map Author.uuid author $$ fun uuid ->
+    select (uuid, post)
 
 end
