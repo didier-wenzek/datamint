@@ -124,7 +124,6 @@ module type BS = sig
   end
 end
 
-let ($$) f x = f x
 let (@|) f x = f x
 
 module Comp(Schema: BS) = struct
@@ -145,20 +144,20 @@ module Comp(Schema: BS) = struct
 
   let posts_of_author name =
     let open Collect in
-    inv_map Author.name name $$ fun author ->
-    inv_map Post.author author $$ fun post ->
-    map Post.uuid post $$ fun uuid ->
-    map Post.title post $$ fun title ->
-    map Post.date post $$ fun date ->
+    inv_map Author.name name   @| fun author ->
+    inv_map Post.author author @| fun post ->
+    map Post.uuid post         @| fun uuid ->
+    map Post.title post        @| fun title ->
+    map Post.date post         @| fun date ->
     select (uuid,title,date)
 
   let posts_of_tag tag =
     let open Collect in
-    inv_map Post.tags tag $$ fun post ->
-    map (Post.author <=> Author.name) post $$ fun author_name ->
-    map Post.uuid post $$ fun uuid ->
-    map Post.title post $$ fun title ->
-    map Post.date post $$ fun date ->
+    inv_map Post.tags tag                  @| fun post ->
+    map (Post.author <=> Author.name) post @| fun author_name ->
+    map Post.uuid post                     @| fun uuid ->
+    map Post.title post                    @| fun title ->
+    map Post.date post                     @| fun date ->
     select (uuid,author_name,title,date)
 
   let authors_commenting_their_posts =
@@ -172,7 +171,7 @@ module Comp(Schema: BS) = struct
 
   let count_of_posts =
     let open ReduceCount in
-    generate_members posts $$ fun post ->
+    generate_members posts @| fun post ->
     select post
 
   module GroupCount = Group(String)(Count)
@@ -180,8 +179,8 @@ module Comp(Schema: BS) = struct
 
   let count_of_posts_per_author =
     let open ReduceGroupCount in
-    generate Author.posts $$ fun author post ->
-    map Author.uuid author $$ fun uuid ->
+    generate Author.posts  @| fun author post ->
+    map Author.uuid author @| fun uuid ->
     select (uuid, post)
 
 end
