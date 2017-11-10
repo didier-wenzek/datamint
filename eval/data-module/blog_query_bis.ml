@@ -79,10 +79,10 @@ module type S = sig
     val generate: ('a,'b) relation -> ('a -> 'b -> 'c value) -> 'c value
     val map:      ('a,'b) relation -> 'a -> ('b -> 'c value) -> 'c value
     val inv_map:  ('a,'b) relation -> 'b -> ('a -> 'c value) -> 'c value
-    val filter:   ('a,'b) relation -> 'a -> 'b -> (unit-> 'c value) -> 'c value
+    val filter:   ('a,'b) relation -> 'a -> 'b -> 'c value -> 'c value
 
     val generate_members: ('a) collection -> ('a -> 'b value) -> 'b value
-    val filter_members:   ('a) collection -> 'a -> (unit -> 'b value) -> 'b value
+    val filter_members:   ('a) collection -> 'a -> 'b value -> 'b value
   end
 end
 
@@ -125,6 +125,7 @@ module type BS = sig
 end
 
 let ($$) f x = f x
+let (@|) f x = f x
 
 module Comp(Schema: BS) = struct
   open Schema
@@ -162,9 +163,9 @@ module Comp(Schema: BS) = struct
 
   let authors_commenting_their_posts =
     let open Collect in
-    generate (Author.posts <=> Post.comments <=> Comment.author) $$ fun post_author comment_author ->
-    filter eq post_author comment_author $$ fun () ->
-    map Author.name post_author $$ fun author_name ->
+    generate (Author.posts <=> Post.comments <=> Comment.author) @| fun post_author comment_author ->
+    filter eq post_author comment_author                         @|
+    map Author.name post_author                                  @| fun author_name ->
     select author_name
 
   module ReduceCount = Reduce(Count)
