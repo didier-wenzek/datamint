@@ -1,4 +1,4 @@
-type multiplicity =
+type t =
   | PartialPlural       (* zero or more *)
   | PartialSingular     (* at most one *)
   | TotalSingular       (* exactly one *)
@@ -25,7 +25,9 @@ let multiplicity ~partial ~plural =
   then if plural then PartialPlural else PartialSingular
   else if plural then TotalPlural else TotalSingular
 
-let combine_multiplicity r s =
+let unit = TotalSingular
+
+let mult r s =
   let partial = is_partial r || is_partial s in
   let plural = is_plural r || is_plural s in
   multiplicity  ~partial ~plural

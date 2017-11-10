@@ -1,19 +1,20 @@
-type multiplicity =
-  | PartialPlural       (* zero or more *)
-  | PartialSingular     (* at most one *)
-  | TotalSingular       (* exactly one *)
-  | TotalPlural         (* at least one *)
+type t =
+  | PartialPlural       (** zero or more *)
+  | PartialSingular     (** at most one *)
+  | TotalSingular       (** exactly one *)
+  | TotalPlural         (** at least one *)
 
-val is_partial: multiplicity -> bool
-val is_total: multiplicity -> bool
-val is_singular: multiplicity -> bool
-val is_plural: multiplicity -> bool
+val is_partial: t -> bool
+val is_total: t -> bool
+val is_singular: t -> bool
+val is_plural: t -> bool
 
-val multiplicity: partial:bool -> plural:bool -> multiplicity
+val multiplicity: partial:bool -> plural:bool -> t
 
-val combine_multiplicity: multiplicity -> multiplicity -> multiplicity
+val unit: t
+val mult: t -> t -> t
 
-val make_partial: multiplicity -> multiplicity
-val make_total: multiplicity -> multiplicity
-val make_singular: multiplicity -> multiplicity
-val make_plural: multiplicity -> multiplicity
+val make_partial: t -> t
+val make_total: t -> t
+val make_singular: t -> t
+val make_plural: t -> t
