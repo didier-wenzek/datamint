@@ -1,4 +1,3 @@
-
 (** A relation is represented by a multiplicity triple.
 
   - The multiplicity of pairs.
@@ -20,17 +19,20 @@ type ('a,'b) reducer = Multiplicity.t
 type 'a records = Multiplicity.t
 
 (** Records and field are unused *)
+type ('a,'b) extractor = unit
+type ('a,'b,'c) injector = unit
 type 'a record = unit
 type 'a field = unit
 
 let record_source = Multiplicity.unit
 
-let generate rel _  = Multiplicity.mult rel.gen
-let map rel _ _     = Multiplicity.mult rel.map
-let inv_map rel _ _ = Multiplicity.mult rel.inv
-let filter rel _ _  = Multiplicity.make_partial
+let generate rel _ _ = Multiplicity.mult rel.gen
+let map      rel _ _ = Multiplicity.mult rel.map
+let inv_map  rel _ _ = Multiplicity.mult rel.inv
+let filter   rel _ _ = Multiplicity.make_partial
+
 let generate_member col _ = Multiplicity.mult col
-let filter_member col _   = Multiplicity.make_partial
+let filter_member   col _ = Multiplicity.make_partial
 
 let reduce _ red _         = red
 let group _ _ m            = { gen = m; map = Multiplicity.at_least_one; inv = Multiplicity.zero_or_more }
