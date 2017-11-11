@@ -4,6 +4,11 @@ type t =
   | TotalSingular       (* exactly one *)
   | TotalPlural         (* at least one *)
 
+let zero_or_more = PartialPlural
+let at_most_one = PartialSingular
+let exactly_one = TotalSingular
+let at_least_one = TotalPlural
+
 let is_singular = function
   | TotalSingular | PartialSingular -> true
   | _ -> false

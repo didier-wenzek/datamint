@@ -4,6 +4,11 @@ type t =
   | TotalSingular       (** exactly one *)
   | TotalPlural         (** at least one *)
 
+val zero_or_more: t
+val at_most_one: t
+val exactly_one: t
+val at_least_one: t
+
 val is_partial: t -> bool
 val is_total: t -> bool
 val is_singular: t -> bool
