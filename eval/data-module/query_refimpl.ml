@@ -63,9 +63,25 @@ module Make(Schema: Schema.S): Query.S
   type 'a clause =
     | Clause: (('a,'c) var * ('a,'b) relation * ('b,'c) var) -> 'c clause
 
-  type 'a query = 'a clause list
+  type ('a,'b) selection = 'b -> 'a
 
-  let query q = q
+  type 'a query =
+    | Query: ('a,'b) selection * 'b clause list -> 'a query
+
+  let all = id
+
+  let select_var = function
+    | Var x -> x.getter
+    | Val x -> fun _ -> x
+    | Ignore -> raise (Invalid_argument "An ignored variable cannot be selected")
+
+  let (!$) = select_var
+
+  let ($) selection var =
+    let var = select_var var in
+    fun c -> (selection c, var c)
+
+  let select selection query = Query (selection, query)
 
   let (!!) x rel y = Clause (x,rel,y)
 

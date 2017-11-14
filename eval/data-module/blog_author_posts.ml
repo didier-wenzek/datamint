@@ -9,4 +9,4 @@ let iter_rows f =
 let () =
   let q = posts_of_author "foo" in
   let r = run q in
-  iter_rows (fun (_,uuid,title,date) -> Printf.printf "%s: %s (%d)\n" uuid title date) r
+  iter_rows (fun ((uuid,title),date) -> Printf.printf "%s: %s (%d)\n" uuid title date) r

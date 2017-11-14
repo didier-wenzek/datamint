@@ -15,7 +15,7 @@ module Compile(Schema: Blog_schema.S) = struct
 
   let posts_of_author name =
     let post, uuid, title, date = var4 () in
-    query [
+    select (!$ uuid $ title $ date) [
       !! post (Post.author <=> Author.name) (value name);
       !! post Post.uuid uuid;
       !! post Post.title title;
@@ -24,7 +24,7 @@ module Compile(Schema: Blog_schema.S) = struct
 
   let posts_of_tag tag =
     let post, title, author, date = var4 () in
-    query [
+    select (!$ title $ author $ date) [
       !! post Post.tags (value tag);
       !! post (Post.author <=> Author.name) author;
       !! post Post.date date;
@@ -33,7 +33,7 @@ module Compile(Schema: Blog_schema.S) = struct
     
   let authors_commenting_their_posts =
     let author = var1 () in
-    query [
+    select all [
       !! author (Author.posts <=> Post.comments <=> Comment.author) author
     ]
 end

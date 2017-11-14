@@ -22,6 +22,12 @@ module type S = sig
   val value: 'a -> ('a,'b) var
 
   val (!!): ('a,'c) var -> ('a,'b) relation -> ('b,'c) var -> 'c clause
-  val query: 'a clause list -> 'a query
+
+  type ('a,'b) selection
+  val all: ('a,'a) selection
+  val (!$): ('a,'b) var -> ('a,'b) selection
+  val ($): ('a,'c) selection -> ('b,'c) var -> ('a*'b, 'c) selection
+
+  val select: ('a,'b) selection -> 'b clause list -> 'a query
   val run: 'a query -> 'a result
 end
