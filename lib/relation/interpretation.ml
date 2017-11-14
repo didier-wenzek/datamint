@@ -2,9 +2,7 @@
 type gen_cap = Capability.some
 
 
-(** Signature of modules aimed to interpret a query plan.
-
-*)
+(** Signature of modules aimed to interpret a query plan. *)
 module type S = sig
   
   (** A relation between ['a] and ['b] values.
@@ -46,14 +44,14 @@ module type S = sig
       The relation must have the capability to generate right values given a left value.
       Use the extractor function to get the left value of an input record.
       Use the injector function to add a right value into a source record. *)
-  val map: ('a,'b, 'ab_gen,'a_gen,gen_cap) relation -> ('c,'a) extractor -> ('c,'b,'d) injector -> 'c records -> 'd records
+  val map: ('a,'b, 'ab_gen,gen_cap,'b_cap) relation -> ('c,'a) extractor -> ('c,'b,'d) injector -> 'c records -> 'd records
 
   (** Map right values to their related left values.
 
       The relation must have the capability to generate left values given a right value.
       Use the extractor function to get the right value of an input record.
       Use the injector function to add a left value into a source record. *)
-  val inv_map: ('a,'b, 'ab_gen,gen_cap,'b_gen) relation -> ('c,'a,'d) injector -> ('c,'b) extractor -> 'c records -> 'd records
+  val inv_map: ('a,'b, 'ab_gen,'a_cap,gen_cap) relation -> ('c,'a,'d) injector -> ('c,'b) extractor -> 'c records -> 'd records
 
   (** Filter pairs which are unrelated.
 
@@ -75,6 +73,6 @@ module type S = sig
   val group: ('a,'b) extractor -> ('a,'c) extractor -> 'a records -> ('b,'c,gen_cap,gen_cap,gen_cap) relation
   val group_reduce: ('a,'b) extractor -> ('a,'c) extractor -> ('c,'d) reducer -> 'a records -> ('b,'d,gen_cap,gen_cap,gen_cap) relation
 
-  val rel_of_col: ('a,'a_gen) collection -> (unit,'a,'a_gen,gen_cap,'a_gen) relation
-  val col_of_rel: (unit,'a,'a_gen,gen_cap,'a_gen) relation -> ('a,'a_gen) collection
+  val rel_of_col: ('a,'a_gen) collection -> (unit,'a,'a_gen,'a_gen,gen_cap) relation
+  val col_of_rel: (unit,'a,'a_gen,'a_gen,gen_cap) relation -> ('a,'a_gen) collection
 end

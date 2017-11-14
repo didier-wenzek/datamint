@@ -21,8 +21,6 @@ type 'a records = Multiplicity.t
 (** Records and field are unused *)
 type ('a,'b) extractor = unit
 type ('a,'b,'c) injector = unit
-type 'a record = unit
-type 'a field = unit
 
 let record_source = Multiplicity.unit
 
