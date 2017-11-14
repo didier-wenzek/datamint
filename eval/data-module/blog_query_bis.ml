@@ -56,6 +56,98 @@ module Group(K: Map.OrderedType)(M: Monoid) : Monoid
   ) kvs
 end
 
+module Print : Monoid
+  with type 'a elt = string
+= struct
+  type 'a t = unit
+  type 'a elt = string
+
+  let empty = ()
+  let single = print_string
+  let merge () () = ()
+end
+
+module type Store = sig
+  type 'a t
+  type 'a elt
+  type 'a res
+
+  val init: unit -> 'a t res
+  val push: 'a elt -> 'a t -> 'a t res
+  val term: 'a t -> unit res
+
+  val return: 'a -> 'a res
+  val bind: 'a res -> ('a -> 'b res) -> 'b res
+end
+
+module Action(S: Store) : Monoid
+  with type 'a elt = 'a S.elt
+  and  type 'a t = 'a S.t -> 'a S.t S.res
+= struct
+  type 'a t = 'a S.t -> 'a S.t S.res
+  type 'a elt = 'a S.elt
+
+  let empty = S.return
+  let single = S.push
+  let merge a b s =
+    S.bind (a s) b
+end
+
+(*
+module LwtConsole : Store
+  with type 'a t = unit
+  and  type 'a elt = string
+  and  type 'a res = 'a Lwt.t
+= struct
+  type 'a t = unit
+  type 'a elt = string
+  type 'a res = 'a Lwt.t
+
+  let return = Lwt.return
+  let bind = Lwt.bind
+
+  let init () = Lwt.return_unit
+  let term () = Lwt.return_unit
+  let push x () = Lwt_io.printl x
+end
+
+module PrintLwt = Action(LwtConsole)
+
+module type Col = sig
+  type 'a t
+  type 'a elt
+
+  module Reduce (M: Monoid) : sig
+    val gen: 'a t -> ('a elt -> 'b M.t) -> 'b M.t
+    val select: 'a M.elt -> 'a M.t
+  end
+end
+
+module Range : Col
+  with type 'a t = int * int
+  and  type 'a elt = int
+= struct
+  type 'a t = int * int
+  type 'a elt = int
+  
+  module Reduce (M: Monoid) = struct
+    let rec gen (min,max) f =
+      if min <= max
+      then M.merge (f min) (gen (min+1,max) f)
+      else M.empty
+
+    let select = M.single
+  end
+end
+
+module R = Range.Reduce(PrintLwt)
+let show min max =
+  let open R in
+  gen (1,10) (fun i -> select (string_of_int i))
+  () (* Stack overflow during evaluation *)
+
+*)
+
 module type S = sig
   type ('a,'b) relation
   type 'a collection
