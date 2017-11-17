@@ -8,4 +8,4 @@ type config = resource * publisher_kind
 
 type publisher = (string -> unit Lwt.t) -> unit Lwt.t
 
-val make_publisher: publisher_kind -> publisher Lwt.t
+val make_publisher: Cluster.config -> publisher_kind -> publisher Lwt.t

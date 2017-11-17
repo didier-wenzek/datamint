@@ -14,6 +14,7 @@ module Env : sig
 end
 
 val open_resources:
-     Logger.config list
+     Cluster.config
+  -> Logger.config list
   -> Publisher.config list
   -> t Env.t Lwt.t

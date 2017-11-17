@@ -15,4 +15,4 @@ val stdout: logger
 val stderr: logger
 val file: string -> logger Lwt.t
 
-val make_logger: logger_kind -> logger Lwt.t
+val make_logger: Cluster.config -> logger_kind -> logger Lwt.t

@@ -57,17 +57,17 @@ module Env = struct
     loop
 end
 
-let open_logger conf =
-  Logger.make_logger conf
+let open_logger cluster conf =
+  Logger.make_logger cluster conf
   >|= fun l ->
   Logger l
 
-let open_publisher conf =
-  Publisher.make_publisher conf
+let open_publisher cluster conf =
+  Publisher.make_publisher cluster conf
   >|= fun p ->
   Publisher p
 
-let open_resources loggers publishers =
+let open_resources cluster loggers publishers =
   Env.empty
-  |>  Env.add_resources open_logger loggers
-  >>= Env.add_resources open_publisher publishers
+  |>  Env.add_resources (open_logger cluster) loggers
+  >>= Env.add_resources (open_publisher cluster) publishers

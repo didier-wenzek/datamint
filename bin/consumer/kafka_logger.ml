@@ -8,6 +8,6 @@ let connect_topic kafka_cluster topic_name =
 let log_event topic _resource event =
   Lwt.wrap (fun () -> Kafka.produce topic Kafka.partition_unassigned event)
 
-let topic_logger topic =
-  let handler, topic = connect_topic "localhost" topic in
+let topic_logger kafka_cluster topic =
+  let handler, topic = connect_topic kafka_cluster topic in
   log_event topic

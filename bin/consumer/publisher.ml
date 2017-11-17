@@ -11,5 +11,5 @@ type config = resource * publisher_kind
 
 type publisher = (string -> unit Lwt.t) -> unit Lwt.t
 
-let make_publisher = function
-  | Kafka topic -> Lwt.return (Kafka_publisher.topic_publisher topic)
+let make_publisher cluster = function
+  | Kafka topic -> Lwt.return (Kafka_publisher.topic_publisher cluster.Cluster.kafka_hosts topic)

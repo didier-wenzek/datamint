@@ -31,6 +31,6 @@ let publish_events messages push =
   in
   loop (seed messages)
 
-let topic_publisher topic =
-  let messages = KafkaStore.Source.source_of_topic "localhost" topic in
+let topic_publisher kafka_cluster topic =
+  let messages = KafkaStore.Source.source_of_topic kafka_cluster topic in
   publish_events messages

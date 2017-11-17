@@ -26,7 +26,7 @@ let partition_count =
   Arg.(required & pos 1 (some int) None & info [] ~docv:"PARTITION_COUNT" ~doc)
 
 let kafka_host =
-  let doc = "Connection string to the Kafka cluster." in
+  let doc = "Connection string to the Kafka cluster (comma separated list of hostnames or hostname:port pairs) ." in
   Arg.(value & opt string "localhost" & info ["k"; "kafka"] ~docv:"KAFKA_CLUSTER" ~doc)
 
 let working_dir =

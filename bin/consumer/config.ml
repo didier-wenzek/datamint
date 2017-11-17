@@ -13,8 +13,8 @@ type config =
     publishers: Publisher.config list;
   } [@@deriving sexp]
 
-let open_resources config =
-  Resource.open_resources config.loggers config.publishers
+let open_resources cluster config =
+  Resource.open_resources cluster config.loggers config.publishers
 
 let endpoint_server = function
   | Http config -> Http.server config

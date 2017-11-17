@@ -20,8 +20,8 @@ let file = File_logger.file
 
 open Lwt.Infix
 
-let make_logger = function
+let make_logger cluster = function
   | Stdout -> Lwt.return stdout
   | Stderr -> Lwt.return stderr
   | File path -> file path
-  | Kafka topic -> Lwt.return (Kafka_logger.topic_logger topic)
+  | Kafka topic -> Lwt.return (Kafka_logger.topic_logger cluster.Cluster.kafka_hosts topic)
