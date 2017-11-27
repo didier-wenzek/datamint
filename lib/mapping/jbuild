@@ -1,0 +1,6 @@
+(jbuild_version 1)
+
+(library
+ ((name Mapping)
+  (public_name datamint.mapping)
+  (libraries (lwt str))))
