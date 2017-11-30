@@ -116,19 +116,6 @@ module Make(Elt: Map.OrderedType) = struct
     | _, _ -> true
 
   module Expr = struct
-
-    type bnf =
-      | Union of union
-      | Inter of inter
-
-    and union =
-      | FullSet
-      | MaxUnion of elt * bool * inter
-
-    and inter =
-      | EmptySet
-      | MinInter of elt * bool * union
-
     type nf =
       | EmptyRange
       | FullRange
@@ -231,13 +218,121 @@ module Make(Elt: Map.OrderedType) = struct
       let rec hoist_or clauses = function
         | In Empty -> empty
         | Or (x,y) -> hoist_or (hoist_or clauses y) x
-        | clause -> union clauses (hoist_and FullRange clause)
+        | conjonction -> union clauses (hoist_and FullRange conjonction)
       in
       fun e -> hoist_or EmptyRange (dnf_expr e)
 
     let nf =
       fold EmptyRange FullRange union inter clause 
+  end
 
+  module ExprBis = struct
+    type nf =
+      | Union of union
+      | Inter of inter
+
+    and union =
+      | FullSet
+      | UnionLT of elt * inter      (** [UnionLT(x_max, xs)] is the set [{ x | x <  x_max} union xs }] *)
+      | UnionLE of elt * inter      (** [UnionLE(x_max, xs)] is the set [{ x | x <= x_max} union xs }] *)
+
+    and inter =
+      | EmptySet
+      | InterGT of elt * union      (** [InterGT(x_min, xs)] is the set [{ x | x >  x_min} inter xs }] *)
+      | InterGE of elt * union      (** [InterGE(x_min, xs)] is the set [{ x | x >= x_min} inter xs }] *)
+
+    let clause = function
+      | Empty -> Inter EmptySet
+      | Full -> Union FullSet
+      | EQ x -> Inter (InterGE(x, UnionLE(x, EmptySet)))
+      | NE x -> Union (UnionLT(x, InterGT(x, FullSet)))
+      | LT x -> Union (UnionLT(x, EmptySet))
+      | LE x -> Union (UnionLE(x, EmptySet))
+      | GT x -> Inter (InterGT(x, FullSet))
+      | GE x -> Inter (InterGE(x, FullSet))
+
+    module Union = struct
+      let inclusive = function
+        | UnionLE _ -> true
+        | _ -> false
+
+      let make x include_x oxs =
+        if include_x
+        then UnionLE (x, oxs)
+        else UnionLT (x, oxs)
+    end
+
+    module Inter = struct
+      let inclusive = function
+        | InterGE _ -> true
+        | _ -> false
+
+      let make x include_x oxs =
+        if include_x
+        then InterGE (x, oxs)
+        else InterGT (x, oxs)
+    end
+
+    let rec inter_inter xs ys = match xs,ys with
+      | EmptySet, _
+      | _, EmptySet ->
+        EmptySet
+
+      | InterGT (x,oxs), InterGT (y,oys)
+      | InterGT (x,oxs), InterGE (y,oys)
+      | InterGE (x,oxs), InterGT (y,oys)
+      | InterGE (x,oxs), InterGE (y,oys) ->
+        let cmp = Elt.compare x y in
+        let include_x = Inter.inclusive xs in
+        let include_y = Inter.inclusive ys in
+        if cmp = 0
+        then Inter.make x (include_x && include_y) (inter_union oxs oys)
+        else 
+          if cmp < 0
+          then inter_mixed ys oxs
+          else inter_mixed xs oys
+
+    and inter_union xs ys = match xs,ys with
+      | FullSet, xs
+      | xs, FullSet ->
+        xs
+        
+      | UnionLT (x,oxs), UnionLT (y,oys)
+      | UnionLT (x,oxs), UnionLE (y,oys)
+      | UnionLE (x,oxs), UnionLT (y,oys)
+      | UnionLE (x,oxs), UnionLE (y,oys) ->
+        let cmp = Elt.compare x y in
+        let include_x = Union.inclusive xs in
+        let include_y = Union.inclusive ys in
+        if cmp = 0
+        then Union.make x (include_x && include_y) (inter_inter oxs oys)
+        else 
+          if cmp < 0
+          then Union.make x include_x (inter_mixed oxs ys) 
+          else Union.make y include_y (inter_mixed oys xs)
+
+    and inter_mixed xs ys = match xs, ys with
+      | EmptySet, _ -> EmptySet
+      | xs, FullSet -> xs
+
+      | InterGT (x,oxs), UnionLT (y,oys)
+      | InterGE (x,oxs), UnionLT (y,oys)
+      | InterGT (x,oxs), UnionLE (y,oys)
+      | InterGE (x,oxs), UnionLE (y,oys) ->
+        let cmp = Elt.compare x y in
+        let include_x = Inter.inclusive xs in
+        let include_y = Union.inclusive ys in
+        if cmp > 0
+        || cmp = 0 && (not (include_x && include_y))
+        then EmptySet
+        else Inter.make x include_x (inter_union oxs ys)
+
+    let inter xs ys = match xs, ys with
+      | Inter xs, Inter ys -> Inter (inter_inter xs ys)
+      | Union xs, Union ys -> Union (inter_union xs ys)
+      | Inter xs, Union ys
+      | Union ys, Inter xs -> Inter (inter_mixed xs ys)
+     
   end
    
 end
