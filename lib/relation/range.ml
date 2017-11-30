@@ -14,8 +14,6 @@ type 'a expr =
   | Or of 'a expr * 'a expr
   | Not of 'a expr
 
-type 'a dnf = 'a t list list
-
 let rec remove_negation = function
   | Not (Not e) -> remove_negation e
   | Not (And (e,f)) -> Or (remove_negation (Not e), remove_negation (Not f))
@@ -95,61 +93,27 @@ module Make(Elt: Map.OrderedType) = struct
     | GT y -> gt x y
     | GE y -> ge x y
 
-  let overlap_eq = contain
+  let overlap r s = match r,s with
+    | Empty, _
+    | _, Empty -> false
 
-  let overlap_ne x = function
-    | Empty -> false
-    | EQ y -> ne x y
-    | _ -> true
+    | Full, _
+    | _, Full -> true
 
-  let overlap_lt x = function
-    | Empty -> false
-    | EQ y  | GT y | GE y -> lt y x
-    | _ -> true
+    | EQ x, r
+    | r, EQ x -> contain x r
 
-  let overlap_le x = function
-    | Empty -> false
-    | EQ y  | GE y -> le y x
-    | GT y -> lt y x
-    | _ -> true
+    | GT x, LT y 
+    | GT x, LE y 
+    | GE x, LT y 
+    | LT y, GT x
+    | LE y, GT x
+    | LT y, GE x -> lt x y
 
-  let overlap_gt x = function
-    | Empty -> false
-    | EQ y  | LT y | LE y -> gt y x
-    | _ -> true
+    | GE x, LE y
+    | LE y, GE x -> le x y
 
-  let overlap_ge x = function
-    | Empty -> false
-    | EQ y  | LE y -> ge y x
-    | LT y -> gt y x
-    | _ -> true
-
-  let overlap = function
-    | Empty -> fun _ -> false
-    | Full -> fun _ -> true
-    | EQ x -> overlap_eq x
-    | NE x -> overlap_ne x
-    | LT x -> overlap_lt x
-    | LE x -> overlap_le x
-    | GT x -> overlap_gt x
-    | GE x -> overlap_ge x
-
-  let intersect_eq x r = 
-    if overlap_eq x r
-    then EQ x
-    else Empty
-
-(*
-  let intersect = function
-    | Empty -> fun _ -> Empty
-    | Full -> fun _ -> Full
-    | EQ x -> intersect_eq x
-    | NE x -> intersect_ne x
-    | LT x -> intersect_lt x
-    | LE x -> intersect_le x
-    | GT x -> intersect_gt x
-    | GE x -> intersect_ge x
-*)
+    | _, _ -> true
 
   module Expr = struct
 

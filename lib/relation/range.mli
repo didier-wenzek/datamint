@@ -18,10 +18,11 @@ type 'a expr =
   | Or of 'a expr * 'a expr
   | Not of 'a expr
 
-(* Returns an equivalent expression in disjonctive normal form
+(** Returns an equivalent expression in disjonctive normal form
    without negation nor not-equal range. *)
 val dnf_expr: 'a expr -> 'a expr
 
+(** Build a module for range expressions using a specific order *)
 module Make(Elt: Map.OrderedType) : sig
 
   type elt = Elt.t
@@ -34,6 +35,7 @@ module Make(Elt: Map.OrderedType) : sig
   val ge: elt -> elt -> bool
 
   val contain: elt -> elt t -> bool
+  val overlap: elt t -> elt t -> bool
 
   module Expr : sig
     type nf
