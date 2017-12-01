@@ -31,6 +31,11 @@ let publish_events messages push =
   in
   loop (seed messages)
 
+let publish_events messages partitions push =
+  List.map (fun partition -> publish_events (messages partition) push) partitions
+  |> Lwt.join 
+  
 let topic_publisher kafka_cluster topic =
-  let messages = KafkaStore.Source.source_of_topic kafka_cluster topic in
-  publish_events messages
+  let partitions = [0;1;2] in
+  let messages partition = KafkaStore.Source.source_of_partition kafka_cluster topic partition in
+  publish_events messages partitions

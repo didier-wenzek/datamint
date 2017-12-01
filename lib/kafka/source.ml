@@ -61,7 +61,7 @@ let adjust_buffer_size con received =
     then
       enlarge_buffer con
 
-let rec consume_batch con =
+let consume_batch con =
   let timeout_ms = con.timeout_ms in
   let msg_count = con.msg_count in
   Kafka_lwt.consume_batch ~timeout_ms ~msg_count con.topic con.partition
@@ -80,10 +80,6 @@ let source_of_partition ~host ~topic ~partition =
     next_chunk = next_messages_from_partition con;
     index_reducer = partition_offset_reducer;
   }
-
-let source_of_topic ~host ~topic =
-  let partition = 0 in (* FIXME *)
-  source_of_partition ~host ~topic ~partition
 
 let messages_of_partition ~host ~topic ~partition =
   Unbounded.of_source (source_of_partition ~host ~topic ~partition)

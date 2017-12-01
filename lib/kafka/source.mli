@@ -6,6 +6,3 @@ val kafka_partition: host:string -> topic:string -> partition:int -> (string, in
 
 (* Unbounded source of messages publish on a given kafka partition *)
 val source_of_partition: host:string -> topic:string -> partition:int -> (int64, int64, string) Series.Unbounded.source
-
-(* Unbounded source of messages publish on a given kafka topic *)
-val source_of_topic: host:string -> topic:string -> (int64, int64, string) Series.Unbounded.source
