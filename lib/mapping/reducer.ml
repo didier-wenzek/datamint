@@ -171,7 +171,9 @@ module MappingOpt(K: Map.OrderedType)(V: S) : M
     | None, s | s, None -> s
   ) kvs
 
-  let find = G.find_opt
+  let find k kvs =
+    try Some (G.find k kvs)
+    with Not_found -> None
 
   let update k v kvs =
     try
