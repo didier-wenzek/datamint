@@ -3,13 +3,28 @@
 <html>
 <head>
   <script>
+    function listen_updates () {
+      var ws_sub = new WebSocket('ws://localhost:8001/rooms/visitors/count');
+
+      ws_sub.onmessage = function(event) {
+        console.log('Msg received: ' + event.data);
+        var obj = JSON.parse(event.data);
+        var room = document.getElementById(obj.room);
+        room.textContent = obj.room + ": " + obj.count;
+      };
+
+      ws_sub.onopen = function() {
+        console.log('Websocket sub opened');
+      };
+      ws_sub.onerror = function(error) {
+        console.log('Websocket sub error: ' + error.data);
+      };
+      ws_sub.onclose = function() {
+        console.log('Websocket sub closed');
+      };
+    }
+
     var ws_pub = new WebSocket('ws://localhost:8001/events/positions');
-    var ws_sub = new WebSocket('ws://localhost:8001/rooms/visitors/count');
-
-    ws_sub.onmessage = function(event) {
-      console.log('Msg received: ' + event.data);
-    };
-
     ws_pub.onopen = function() {
       console.log('Websocket pub opened');
     };
@@ -20,25 +35,15 @@
       console.log('Websocket pub closed');
     };
 
-    ws_sub.onopen = function() {
-      console.log('Websocket sub opened');
-    };
-    ws_sub.onerror = function(error) {
-      console.log('Websocket sub error: ' + error.data);
-    };
-    ws_sub.onclose = function() {
-      console.log('Websocket sub closed');
-    };
-
     function send_position(visitor,x,y) {
       x = Math.trunc(x / 200);
       y = Math.trunc(y / 150);
       timestamp = (new Date()).getTime();
-      room = "R"+ x + "." + y;
+      room = "R"+ y + "." + x;
       e = '{ "visitor": "'+ visitor +'", "room": "'+ room +'", "timestamp": '+ timestamp +' }';
     
       ws_pub.send(e);
-      console.log('Msg sent: ' + e);
+      // console.log('Msg sent: ' + e);
     };
 
     function position(e) {
@@ -54,32 +59,52 @@
   </script>
 </head>
 
-<body>
-<div id="svgDiv" align="center" width="1000" height="600" onmousemove="position(event)">
-<svg width="1000" height="600">
+<body onload="listen_updates()">
+<div id="svgDiv" width="1000" height="600" onmousemove="position(event)">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="1000" height="600" id="room-map">
   <rect x="0" y="0" width="200" height="150" fill="#EEEEEC" stroke="#204A87" stroke-width="5" />
+  <text id="R0.0" x="50" y="50" fill="red"></text>
   <rect x="200" y="0" width="200" height="150" fill="#EEEEEC" stroke="#204A87" stroke-width="5" />
+  <text id="R0.1" x="250" y="50" fill="red"></text>
   <rect x="400" y="0" width="200" height="150" fill="#EEEEEC" stroke="#204A87" stroke-width="5" />
+  <text id="R0.2" x="450" y="50" fill="red"></text>
   <rect x="600" y="0" width="200" height="150" fill="#EEEEEC" stroke="#204A87" stroke-width="5" />
+  <text id="R0.3" x="650" y="50" fill="red"></text>
   <rect x="800" y="0" width="200" height="150" fill="#EEEEEC" stroke="#204A87" stroke-width="5" />
+  <text id="R0.4" x="850" y="50" fill="red"></text>
 
   <rect x="0" y="150" width="200" height="150" fill="#EEEEEC" stroke="#204A87" stroke-width="5" />
+  <text id="R0.0" x="50" y="200" fill="red"></text>
   <rect x="200" y="150" width="200" height="150" fill="#EEEEEC" stroke="#204A87" stroke-width="5" />
+  <text id="R1.1" x="250" y="200" fill="red"></text>
   <rect x="400" y="150" width="200" height="150" fill="#EEEEEC" stroke="#204A87" stroke-width="5" />
+  <text id="R1.2" x="450" y="200" fill="red"></text>
   <rect x="600" y="150" width="200" height="150" fill="#EEEEEC" stroke="#204A87" stroke-width="5" />
+  <text id="R1.3" x="650" y="200" fill="red"></text>
   <rect x="800" y="150" width="200" height="150" fill="#EEEEEC" stroke="#204A87" stroke-width="5" />
+  <text id="R1.4" x="850" y="200" fill="red"></text>
 
   <rect x="0" y="300" width="200" height="150" fill="#EEEEEC" stroke="#204A87" stroke-width="5" />
+  <text id="R2.0" x="50" y="350" fill="red"></text>
   <rect x="200" y="300" width="200" height="150" fill="#EEEEEC" stroke="#204A87" stroke-width="5" />
+  <text id="R2.1" x="250" y="350" fill="red"></text>
   <rect x="400" y="300" width="200" height="150" fill="#EEEEEC" stroke="#204A87" stroke-width="5" />
+  <text id="R2.2" x="450" y="350" fill="red"></text>
   <rect x="600" y="300" width="200" height="150" fill="#EEEEEC" stroke="#204A87" stroke-width="5" />
+  <text id="R2.3" x="650" y="350" fill="red"></text>
   <rect x="800" y="300" width="200" height="150" fill="#EEEEEC" stroke="#204A87" stroke-width="5" />
+  <text id="R2.4" x="850" y="350" fill="red"></text>
 
   <rect x="0" y="450" width="200" height="150" fill="#EEEEEC" stroke="#204A87" stroke-width="5" />
+  <text id="R3.0" x="50" y="500" fill="red"></text>
   <rect x="200" y="450" width="200" height="150" fill="#EEEEEC" stroke="#204A87" stroke-width="5" />
+  <text id="R3.1" x="250" y="500" fill="red"></text>
   <rect x="400" y="450" width="200" height="150" fill="#EEEEEC" stroke="#204A87" stroke-width="5" />
+  <text id="R3.2" x="450" y="500" fill="red"></text>
   <rect x="600" y="450" width="200" height="150" fill="#EEEEEC" stroke="#204A87" stroke-width="5" />
+  <text id="R3.3" x="650" y="500" fill="red"></text>
   <rect x="800" y="450" width="200" height="150" fill="#EEEEEC" stroke="#204A87" stroke-width="5" />
+  <text id="R3.4" x="850" y="500" fill="red"></text>
 </svg>
 </div>
 </body>
