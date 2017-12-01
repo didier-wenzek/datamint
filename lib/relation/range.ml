@@ -14,6 +14,16 @@ type 'a expr =
   | Or of 'a expr * 'a expr
   | Not of 'a expr
 
+type 'a lower_bound =
+  | NoLB
+  | SomeGT of 'a
+  | SomeGE of 'a
+
+type 'a upper_bound =
+  | NoUB
+  | SomeLT of 'a
+  | SomeLE of 'a
+
 let rec remove_negation = function
   | Not (Not e) -> remove_negation e
   | Not (And (e,f)) -> Or (remove_negation (Not e), remove_negation (Not f))
@@ -83,6 +93,14 @@ module Make(Elt: Map.OrderedType) = struct
   let gt x y = Elt.compare x y > 0
   let ge x y = Elt.compare x y >= 0
 
+  let max x y =
+    if Elt.compare x y >= 0
+    then x else y
+
+  let min x y =
+    if Elt.compare x y <= 0
+    then x else y
+
   let contain x = function 
     | Empty -> false
     | Full -> true
@@ -115,6 +133,79 @@ module Make(Elt: Map.OrderedType) = struct
 
     | _, _ -> true
 
+  let max_lower_bound a b = match a,b with
+    | NoLB, a
+    | a, NoLB -> a
+
+    | SomeGT x, SomeGT y
+    | SomeGE x, SomeGT y
+    | SomeGT x, SomeGE y
+    | SomeGE x, SomeGE y ->
+      let cmp = Elt.compare x y in
+      if cmp < 0 then b
+      else if cmp > 0 then a
+      else (match a with SomeGE _ -> b | _ -> a)
+
+  let min_upper_bound a b = match a,b with
+    | NoUB, a
+    | a, NoUB -> a
+
+    | SomeLT x, SomeLT y
+    | SomeLE x, SomeLT y
+    | SomeLT x, SomeLE y
+    | SomeLE x, SomeLE y ->
+      let cmp = Elt.compare x y in
+      if cmp < 0 then a
+      else if cmp > 0 then b
+      else (match a with SomeLE _ -> b | _ -> a)
+
+  let inter_bounds (min1,max1) (min2,max2) =
+    (max_lower_bound min1 min2, min_upper_bound max1 max2)
+
+  let is_empty (min,max) = match min, max with
+    | SomeGT x, SomeLT y
+    | SomeGT x, SomeLE y
+    | SomeGE x, SomeLT y -> ge x y
+    | SomeGE x, SomeLE y -> gt x y
+    | NoLB, _
+    | _, NoUB -> false
+
+  let increasing_lower_bounds (min1,_) (min2,_) = match min1, min2 with
+    | NoLB, _ -> -1
+    | _, NoLB -> +1
+
+    | SomeGT x, SomeGT y
+    | SomeGE x, SomeGT y
+    | SomeGT x, SomeGE y
+    | SomeGE x, SomeGE y ->
+      let cmp = Elt.compare x y in
+      if cmp <> 0 then cmp
+      else (match min1,min2 with
+        | SomeGT _, SomeGE _ -> -1
+        | SomeGE _, SomeGT _ -> +1
+        | _ -> 0)
+
+  let smdnf =
+    let full = (NoLB,NoUB) in
+    let inter r = function
+      | Full -> r
+      | EQ x -> inter_bounds (SomeGE x, SomeLE x) r
+      | LT x -> inter_bounds (NoLB    , SomeLT x) r
+      | LE x -> inter_bounds (NoLB    , SomeLE x) r
+      | GT x -> inter_bounds (SomeGT x, NoUB    ) r
+      | GE x -> inter_bounds (SomeGT x, NoUB    ) r
+      | _ -> assert false
+    in
+    let union s = function
+      | r when is_empty r -> s
+      | (NoLB,NoUB) -> [full]
+      | r -> r::s
+    in
+    fun e -> dnf e
+    |> List.map (List.fold_left inter full)
+    |> List.sort increasing_lower_bounds
+    |> List.fold_left union []
+
   module Expr = struct
     type nf =
       | EmptyRange
@@ -123,107 +214,6 @@ module Make(Elt: Map.OrderedType) = struct
                                         UnionMax(x_max, true, xs) = {x | x <= x_max} union xs *)
       | InterMin of elt * bool * nf  (* InterMin(x_min, false, xs) = {x | x > x_min} inter xs 
                                         InterMin(x_min, true, xs) = {x | x >= x_min} inter xs *)
-
-    let rec inter_min x include_x = function
-      | EmptyRange -> EmptyRange
-      | FullRange -> InterMin(x,include_x,FullRange)
-
-      | UnionMax (y, include_y, oys) as ys ->
-        let cmp = Elt.compare x y in
-        if cmp = 0
-        then
-          if include_x && include_y
-          then InterMin(x, true, ys)
-          else oys
-        else
-          if cmp < 0
-          then InterMin(x,include_x,ys) 
-          else inter_min x include_x oys
-      
-      | InterMin (y, include_y, oys) as ys ->
-        let cmp = Elt.compare x y in
-        if cmp = 0
-        then
-          InterMin(x, include_x && include_y, oys)
-        else
-          if cmp > 0
-          then inter_min x include_x oys 
-          else ys
-
-    let clause = function
-      | Empty -> EmptyRange
-      | Full -> FullRange
-      | EQ x -> InterMin(x, true,  UnionMax(x, true, EmptyRange))
-      | NE x -> UnionMax(x, false, InterMin(x, false, FullRange))
-      | LT x -> UnionMax(x, false, EmptyRange)
-      | LE x -> UnionMax(x, true, EmptyRange)
-      | GT x -> InterMin(x, false, FullRange)
-      | GE x -> InterMin(x, true, FullRange)
-
-    let rec inter xs ys = match xs, ys with
-      | EmptyRange, _ | _, EmptyRange -> EmptyRange
-      | FullRange, e | e, FullRange -> e
-
-      | UnionMax (x,include_x,oxs), UnionMax (y,include_y,oys) ->
-        let cmp = Elt.compare x y in
-        if cmp = 0
-        then UnionMax(x, include_x && include_y, inter oxs oys)
-        else
-          if cmp < 0
-          then UnionMax(x, include_x, inter oxs (inter_min x (not include_x) ys))
-          else UnionMax(y, include_y, inter oys (inter_min y (not include_y) xs))
-
-      | InterMin (x,include_x,oxs), InterMin (y,include_y,oys) ->
-        let cmp = Elt.compare x y in
-        if cmp = 0
-        then InterMin(x, include_x && include_y, inter oxs oys)
-        else
-          if cmp > 0
-          then inter xs (inter_min x include_x ys)
-          else inter ys (inter_min y include_y xs)
-
-      | _ -> FullRange
-      
-    let rec union xs ys = match xs, ys with
-      | EmptyRange, e | e, EmptyRange -> e
-      | FullRange, _ | _, FullRange -> FullRange
-
-      | UnionMax (x,include_x,oxs), UnionMax (y,include_y,oys) ->
-        let cmp = Elt.compare x y in
-        if cmp = 0
-        then UnionMax(x, include_x || include_y, union oxs oys)
-        else
-          if cmp > 0
-          then UnionMax(x, include_x, union oxs (inter_min x (not include_x) ys))
-          else UnionMax(y, include_y, union oys (inter_min y (not include_y) xs))
- 
-      | InterMin (x,include_x,oxs), InterMin (y,include_y,oys) ->
-        let cmp = Elt.compare x y in
-        if cmp = 0
-        then InterMin(x, include_x || include_y, union oxs oys)
-        else
-          if cmp < 0
-          then union xs (inter_min x include_x ys)
-          else union ys (inter_min y include_y xs)
-
-      | _ -> FullRange
-      
-    let fold empty full union inter clause =
-      let rec hoist_and ranges = function
-        | In Full -> full
-        | In range -> inter ranges (clause range)
-        | And (x,y) -> hoist_and (hoist_and ranges y) x
-        | _ -> assert false
-      in
-      let rec hoist_or clauses = function
-        | In Empty -> empty
-        | Or (x,y) -> hoist_or (hoist_or clauses y) x
-        | conjonction -> union clauses (hoist_and FullRange conjonction)
-      in
-      fun e -> hoist_or EmptyRange (dnf_expr e)
-
-    let nf =
-      fold EmptyRange FullRange union inter clause 
   end
 
   module ExprBis = struct
@@ -240,99 +230,6 @@ module Make(Elt: Map.OrderedType) = struct
       | EmptySet
       | InterGT of elt * union      (** [InterGT(x_min, xs)] is the set [{ x | x >  x_min} inter xs }] *)
       | InterGE of elt * union      (** [InterGE(x_min, xs)] is the set [{ x | x >= x_min} inter xs }] *)
-
-    let clause = function
-      | Empty -> Inter EmptySet
-      | Full -> Union FullSet
-      | EQ x -> Inter (InterGE(x, UnionLE(x, EmptySet)))
-      | NE x -> Union (UnionLT(x, InterGT(x, FullSet)))
-      | LT x -> Union (UnionLT(x, EmptySet))
-      | LE x -> Union (UnionLE(x, EmptySet))
-      | GT x -> Inter (InterGT(x, FullSet))
-      | GE x -> Inter (InterGE(x, FullSet))
-
-    module Union = struct
-      let inclusive = function
-        | UnionLE _ -> true
-        | _ -> false
-
-      let make x include_x oxs =
-        if include_x
-        then UnionLE (x, oxs)
-        else UnionLT (x, oxs)
-    end
-
-    module Inter = struct
-      let inclusive = function
-        | InterGE _ -> true
-        | _ -> false
-
-      let make x include_x oxs =
-        if include_x
-        then InterGE (x, oxs)
-        else InterGT (x, oxs)
-    end
-
-    let rec inter_inter xs ys = match xs,ys with
-      | EmptySet, _
-      | _, EmptySet ->
-        EmptySet
-
-      | InterGT (x,oxs), InterGT (y,oys)
-      | InterGT (x,oxs), InterGE (y,oys)
-      | InterGE (x,oxs), InterGT (y,oys)
-      | InterGE (x,oxs), InterGE (y,oys) ->
-        let cmp = Elt.compare x y in
-        let include_x = Inter.inclusive xs in
-        let include_y = Inter.inclusive ys in
-        if cmp = 0
-        then Inter.make x (include_x && include_y) (inter_union oxs oys)
-        else 
-          if cmp < 0
-          then inter_mixed ys oxs
-          else inter_mixed xs oys
-
-    and inter_union xs ys = match xs,ys with
-      | FullSet, xs
-      | xs, FullSet ->
-        xs
-        
-      | UnionLT (x,oxs), UnionLT (y,oys)
-      | UnionLT (x,oxs), UnionLE (y,oys)
-      | UnionLE (x,oxs), UnionLT (y,oys)
-      | UnionLE (x,oxs), UnionLE (y,oys) ->
-        let cmp = Elt.compare x y in
-        let include_x = Union.inclusive xs in
-        let include_y = Union.inclusive ys in
-        if cmp = 0
-        then Union.make x (include_x && include_y) (inter_inter oxs oys)
-        else 
-          if cmp < 0
-          then Union.make x include_x (inter_mixed oxs ys) 
-          else Union.make y include_y (inter_mixed oys xs)
-
-    and inter_mixed xs ys = match xs, ys with
-      | EmptySet, _ -> EmptySet
-      | xs, FullSet -> xs
-
-      | InterGT (x,oxs), UnionLT (y,oys)
-      | InterGE (x,oxs), UnionLT (y,oys)
-      | InterGT (x,oxs), UnionLE (y,oys)
-      | InterGE (x,oxs), UnionLE (y,oys) ->
-        let cmp = Elt.compare x y in
-        let include_x = Inter.inclusive xs in
-        let include_y = Union.inclusive ys in
-        if cmp > 0
-        || cmp = 0 && (not (include_x && include_y))
-        then EmptySet
-        else Inter.make x include_x (inter_union oxs ys)
-
-    let inter xs ys = match xs, ys with
-      | Inter xs, Inter ys -> Inter (inter_inter xs ys)
-      | Union xs, Union ys -> Union (inter_union xs ys)
-      | Inter xs, Union ys
-      | Union ys, Inter xs -> Inter (inter_mixed xs ys)
-     
   end
    
 end
