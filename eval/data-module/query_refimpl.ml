@@ -4,11 +4,11 @@ exception Unbounded
 exception Unboundable
 
 module Var : sig
-  type ('a,'b) var
-  (** A variable of type ['a] in a context of type ['b].
+  type ('a,'context) var
+  (** A variable of type ['a] in a context of type ['context].
 
-      In practice, ['b] is a product type
-      with one component being ['a].
+      In practice, the ['context] is a product type
+      with one component being of type ['a].
 
       The idea is to leverage the type system
       to ensure that variables and relations are correctly chained in a query.
@@ -22,29 +22,33 @@ module Var : sig
         !! post Post.date date;
       ] *)
 
-  type ('a,'b) stack
-  (** A stack of type ['a] in a context of type ['b].
+  type ('stack,'context) stack
+  (** A stack of type ['stack] in a context of type ['context].
 
-      Here, both ['a] and ['b'] are product types,
-      ['a] being a permutation of some of ['b] components. *)
+      Here, both ['stack] and ['context'] are product types,
+      ['stack] being a permutation of some of ['context] components. *)
 
   val var1 : unit ->
            ('a, 'a * unit) var
+  (** A context with a single variable. *)
 
   val var2 : unit ->
            ('a, 'a * ('b * unit)) var *
            ('b, 'a * ('b * unit)) var
+  (** A context with 2 variables. *)
 
   val var3 : unit ->
            ('a, 'a * ('b * ('c * unit))) var *
            ('b, 'a * ('b * ('c * unit))) var *
            ('c, 'a * ('b * ('c * unit))) var
+  (** A context with 3 variables. *)
 
   val var4 : unit ->
            ('a, 'a * ('b * ('c * ('d * unit)))) var *
            ('b, 'a * ('b * ('c * ('d * unit)))) var *
            ('c, 'a * ('b * ('c * ('d * unit)))) var *
            ('d, 'a * ('b * ('c * ('d * unit)))) var
+  (** A context with 4 variables. *)
 
   val var5 : unit ->
            ('a, 'a * ('b * ('c * ('d * ('e * unit))))) var *
@@ -52,9 +56,13 @@ module Var : sig
            ('c, 'a * ('b * ('c * ('d * ('e * unit))))) var *
            ('d, 'a * ('b * ('c * ('d * ('e * unit))))) var *
            ('e, 'a * ('b * ('c * ('d * ('e * unit))))) var
+  (** A context with 5 variables. *)
 
   val __ : ('a,'b) var
+  (** A variable which value is to be ignored. *)
+
   val value: 'a -> ('a,'b) var
+  (** A variable which value is given. *)
 
   val extractor : ('a,'c) var -> ('b,'c) stack -> ('b -> 'a) option
   val empty_stack: ('a,'c) var -> (unit, 'c) stack
@@ -68,23 +76,19 @@ module Var : sig
 end
 = struct
 
-  type ('a,'b) hdl =
-    | NilCtx : (unit, 'c) hdl
-    | ConsCtx : (('c -> 'a) option * ('b,'c) hdl) -> ('a * 'b, 'c) hdl
-
-  type 'a ctx = ('a, unit) hdl
+  type ('a,'b) stack =
+    | NilCtx : ('c, unit) stack
+    | ConsCtx : (('c -> 'a) option * ('c,'b) stack) -> ('c, 'a * 'b) stack
 
   type ('a,'b) var_hdl = {
-    extractor: 'c. ('b,'c) hdl -> ('c -> 'a) option;
-    injector: 'c. ('b,'c) hdl -> ('b,'a * 'c) hdl; 
+    extractor: 'c. ('c,'b) stack -> ('c -> 'a) option;
+    injector: 'c. ('c,'b) stack -> ('a * 'c,'b) stack; 
   }
 
   type ('a,'b) t = {
     hdl: ('a,'b) var_hdl;
-    context: 'b ctx;
+    context: (unit, 'b) stack;
   }
-
-  type ('a,'b) stack = ('b,'a) hdl
 
   type ('a,'b) var =
     | Ignore
@@ -92,7 +96,7 @@ end
     | Var of ('a,'b) t
 
   type ('a,'b) selection = {
-    project: 'c. ('b,'c) hdl -> 'c -> 'a;
+    project: 'c. ('c,'b) stack -> 'c -> 'a;
   }
 
   let var x ctx = Var {
@@ -108,7 +112,7 @@ end
     | None -> None
     | Some extr -> Some (fun (h,t) -> extr t)
 
-  let rec extend: type a. (a,'b) hdl -> (a, 'c * 'b) hdl = function
+  let rec extend: type a. ('b,a) stack -> ('c * 'b, a) stack = function
     | ConsCtx (extr, others) -> ConsCtx (shift_extractor extr, extend others)
     | NilCtx -> NilCtx
 
@@ -160,7 +164,7 @@ end
     }
     | Ignore -> { project = fun _ -> raise Unbounded }
 
-  let rec extract_all: type a. (a,'b) hdl -> 'b -> a = function
+  let rec extract_all: type a. ('b,a) stack -> 'b -> a = function
     | NilCtx -> (fun s -> ())
     | ConsCtx (None, _) -> raise Unbounded
     | ConsCtx (Some head_extr, others) ->
