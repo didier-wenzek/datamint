@@ -97,26 +97,19 @@ end
   type ('a,'context) var_hdl = {
     extractor: 'stack. ('stack,'context) stack_layout -> ('stack -> 'a) option;
     injector: 'stack. ('stack,'context) stack_layout -> ('a * 'stack,'context) stack_layout; 
-  }
-
-  type ('a,'b) t = {
-    hdl: ('a,'b) var_hdl;
-    context: (unit, 'b) stack_layout;
+    empty_layout: (unit, 'context) stack_layout;
   }
 
   type ('a,'b) var =
     | Ignore
     | Val of 'a
-    | Var of ('a,'b) t
+    | Var of ('a,'b) var_hdl
 
   type ('a,'context) selection = {
     project: 'stack. ('stack,'context) stack_layout -> 'stack -> 'a;
   }
 
-  let var x ctx = Var {
-    hdl = x;
-    context = ctx;
-  }
+  let var x = Var x
 
   let __ = Ignore
 
@@ -130,34 +123,36 @@ end
     | ConsCtx (extr, others) -> ConsCtx (shift_extractor extr, extend others)
     | NilCtx -> NilCtx
 
-  let here = {
+  let here empty_layout = {
     extractor = (function ConsCtx (ext, _) -> ext);
     injector = (function ConsCtx (_, others) -> ConsCtx (Some fst, extend others));
+    empty_layout;
   } 
 
-  let next f = {
-    extractor = (function ConsCtx (_, others) -> f.extractor others);
+  let next x = {
+    extractor = (function ConsCtx (_, others) -> x.extractor others);
     injector = (function
-      | ConsCtx(extr, others) -> ConsCtx (shift_extractor extr, f.injector others)
+      | ConsCtx(extr, others) -> ConsCtx (shift_extractor extr, x.injector others)
     );
+    empty_layout = ConsCtx(None,x.empty_layout);
   }
 
   let extractor = function
     | Ignore -> (fun _ -> None)
     | Val x -> (fun _ -> Some (fun _ -> x))
-    | Var var -> var.hdl.extractor
+    | Var var -> var.extractor
 
   let empty_stack = function
-    | Var var -> var.context
+    | Var var -> var.empty_layout
     | _ -> raise Unboundable
 
   let push = function
-    | Var var -> var.hdl.injector
+    | Var var -> var.injector
     | _ -> raise Unboundable
 
   let (!$) = function
     | Var var -> { project = fun st ->
-      match var.hdl.extractor st with
+      match var.extractor st with
       | Some extr -> extr
       | None -> raise Unbounded
     }
@@ -166,7 +161,7 @@ end
 
   let ($) base = function
     | Var var -> { project = fun st ->
-      match var.hdl.extractor st with
+      match var.extractor st with
       | Some tail_extr ->
         let head_extr = base.project st in
         fun s -> (head_extr s, tail_extr s)
@@ -191,39 +186,34 @@ end
   let undef tail = ConsCtx (None, tail)
 
   let var1 () =
-    let x1 = here in
-    let ctx = undef nil in
-    (var x1 ctx)
+    let x1 = here (undef nil) in
+    (var x1)
 
   let var2 () =
-    let x1 = here in
-    let x2 = next here in
-    let ctx = undef (undef nil) in
-    (var x1 ctx, var x2 ctx)
+    let x1 = here (undef (undef nil)) in
+    let x2 = next (here  (undef nil)) in
+    (var x1, var x2)
 
   let var3 () =
-    let x1 = here in
-    let x2 = next here in
-    let x3 = next (next here) in
-    let ctx = undef (undef (undef nil)) in
-    (var x1 ctx, var x2 ctx, var x3 ctx)
+    let x1 = here (undef (undef (undef nil))) in
+    let x2 = next (here  (undef (undef nil))) in
+    let x3 = next (next  (here  (undef nil))) in
+    (var x1, var x2, var x3)
 
   let var4 () =
-    let x1 = here in
-    let x2 = next here in
-    let x3 = next (next here) in
-    let x4 = next (next (next here)) in
-    let ctx = undef (undef (undef (undef nil))) in
-    (var x1 ctx, var x2 ctx, var x3 ctx, var x4 ctx)
+    let x1 = here (undef (undef (undef (undef nil)))) in
+    let x2 = next (here  (undef (undef (undef nil)))) in
+    let x3 = next (next  (here  (undef (undef nil)))) in
+    let x4 = next (next  (next  (here  (undef nil)))) in
+    (var x1, var x2, var x3, var x4)
 
   let var5 () =
-    let x1 = here in
-    let x2 = next here in
-    let x3 = next (next here) in
-    let x4 = next (next (next here)) in
-    let x5 = next (next (next (next here))) in
-    let ctx = undef (undef (undef (undef (undef nil)))) in
-    (var x1 ctx, var x2 ctx, var x3 ctx, var x4 ctx, var x5 ctx)
+    let x1 = here (undef (undef (undef (undef (undef nil))))) in
+    let x2 = next (here  (undef (undef (undef (undef nil))))) in
+    let x3 = next (next  (here  (undef (undef (undef nil))))) in
+    let x4 = next (next  (next  (here  (undef (undef nil))))) in
+    let x5 = next (next  (next  (next  (here  (undef nil))))) in
+    (var x1, var x2, var x3, var x4, var x5)
 end
 
 module Make(Schema: Schema.S): Query.S
