@@ -22,11 +22,18 @@ module Var : sig
         !! post Post.date date;
       ] *)
 
-  type ('stack,'context) stack
-  (** A stack of type ['stack] in a context of type ['context].
+  type ('stack,'context) stack_layout
+  (** Describe the layout of a stack of type ['stack]
+      built in a context of type ['context].
 
       Here, both ['stack] and ['context'] are product types,
       ['stack] being a permutation of some of ['context] components. *)
+
+  type ('a,'context) selection
+  (** Describe a value of type ['a] built from a context of type ['context].
+
+      Here, both ['a] and ['context'] are product types,
+      ['a] being a permutation of some of ['context] components. *)
 
   val var1 : unit ->
            ('a, 'a * unit) var
@@ -64,30 +71,37 @@ module Var : sig
   val value: 'a -> ('a,'b) var
   (** A variable which value is given. *)
 
-  val extractor : ('a,'c) var -> ('b,'c) stack -> ('b -> 'a) option
-  val empty_stack: ('a,'c) var -> (unit, 'c) stack
-  val push : ('a,'c) var -> ('b,'c) stack -> ('a * 'b, 'c) stack
+  val extractor : ('a,'c) var -> ('b,'c) stack_layout -> ('b -> 'a) option
+  val empty_stack: ('a,'c) var -> (unit, 'c) stack_layout
+  val push : ('a,'c) var -> ('b,'c) stack_layout -> ('a * 'b, 'c) stack_layout
 
-  type ('a,'b) selection
   val all: ('a,'a) selection
+  (** Select all the variables of the context,
+      in the declaration order. *)
+
   val (!$): ('a,'b) var -> ('a,'b) selection
+  (** Select only the given variable. *)
+
   val ($): ('a,'c) selection -> ('b,'c) var -> ('a*'b, 'c) selection
+  (** Add the given variable to the selection. *)
 
 end
 = struct
 
-  type ('a,'b) stack =
-    | NilCtx : ('c, unit) stack
-    | ConsCtx : (('c -> 'a) option * ('c,'b) stack) -> ('c, 'a * 'b) stack
+  type ('stack,'context) stack_layout =
+    | NilCtx : ('stack, unit) stack_layout
+    | ConsCtx : (('stack -> 'a) option * ('stack,'context) stack_layout) -> ('stack, 'a * 'context) stack_layout
+  (** An heterogeneous list
+      which gives the stack extractor associated to each variable of the context. *)
 
-  type ('a,'b) var_hdl = {
-    extractor: 'c. ('c,'b) stack -> ('c -> 'a) option;
-    injector: 'c. ('c,'b) stack -> ('a * 'c,'b) stack; 
+  type ('a,'context) var_hdl = {
+    extractor: 'stack. ('stack,'context) stack_layout -> ('stack -> 'a) option;
+    injector: 'stack. ('stack,'context) stack_layout -> ('a * 'stack,'context) stack_layout; 
   }
 
   type ('a,'b) t = {
     hdl: ('a,'b) var_hdl;
-    context: (unit, 'b) stack;
+    context: (unit, 'b) stack_layout;
   }
 
   type ('a,'b) var =
@@ -95,8 +109,8 @@ end
     | Val of 'a
     | Var of ('a,'b) t
 
-  type ('a,'b) selection = {
-    project: 'c. ('c,'b) stack -> 'c -> 'a;
+  type ('a,'context) selection = {
+    project: 'stack. ('stack,'context) stack_layout -> 'stack -> 'a;
   }
 
   let var x ctx = Var {
@@ -112,7 +126,7 @@ end
     | None -> None
     | Some extr -> Some (fun (h,t) -> extr t)
 
-  let rec extend: type a. ('b,a) stack -> ('c * 'b, a) stack = function
+  let rec extend: type a. ('b,a) stack_layout -> ('c * 'b, a) stack_layout = function
     | ConsCtx (extr, others) -> ConsCtx (shift_extractor extr, extend others)
     | NilCtx -> NilCtx
 
@@ -164,7 +178,7 @@ end
     }
     | Ignore -> { project = fun _ -> raise Unbounded }
 
-  let rec extract_all: type a. ('b,a) stack -> 'b -> a = function
+  let rec extract_all: type a. ('b,a) stack_layout -> 'b -> a = function
     | NilCtx -> (fun s -> ())
     | ConsCtx (None, _) -> raise Unbounded
     | ConsCtx (Some head_extr, others) ->
