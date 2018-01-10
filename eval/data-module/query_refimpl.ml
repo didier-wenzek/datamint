@@ -1,44 +1,202 @@
 open Util
 
-module Var = struct
+exception Unbounded
+exception Unboundable
+
+module Var : sig
+  type ('a,'b) var
+  (** A variable of type ['a] in a context of type ['b].
+
+      In practice, ['b] is a product type
+      with one component being ['a].
+
+      The idea is to leverage the type system
+      to ensure that variables and relations are correctly chained in a query.
+      
+      let post, auth, uuid, title, date = var5 () in
+      select (!$ uuid $ title $ date) [
+        !! post Post.author auth;
+        !! auth Author.name (value name);
+        !! post Post.uuid uuid;
+        !! post Post.title title;
+        !! post Post.date date;
+      ] *)
+
+  type ('a,'b) stack
+  (** A stack of type ['a] in a context of type ['b].
+
+      Here, both ['a] and ['b'] are product types,
+      ['a] being a permutation of some of ['b] components. *)
+
+  val var1 : unit ->
+           ('a, 'a * unit) var
+
+  val var2 : unit ->
+           ('a, 'a * ('b * unit)) var *
+           ('b, 'a * ('b * unit)) var
+
+  val var3 : unit ->
+           ('a, 'a * ('b * ('c * unit))) var *
+           ('b, 'a * ('b * ('c * unit))) var *
+           ('c, 'a * ('b * ('c * unit))) var
+
+  val var4 : unit ->
+           ('a, 'a * ('b * ('c * ('d * unit)))) var *
+           ('b, 'a * ('b * ('c * ('d * unit)))) var *
+           ('c, 'a * ('b * ('c * ('d * unit)))) var *
+           ('d, 'a * ('b * ('c * ('d * unit)))) var
+
+  val var5 : unit ->
+           ('a, 'a * ('b * ('c * ('d * ('e * unit))))) var *
+           ('b, 'a * ('b * ('c * ('d * ('e * unit))))) var *
+           ('c, 'a * ('b * ('c * ('d * ('e * unit))))) var *
+           ('d, 'a * ('b * ('c * ('d * ('e * unit))))) var *
+           ('e, 'a * ('b * ('c * ('d * ('e * unit))))) var
+
+  val __ : ('a,'b) var
+  val value: 'a -> ('a,'b) var
+
+  val extractor : ('a,'c) var -> ('b,'c) stack -> ('b -> 'a) option
+  val empty_stack: ('a,'c) var -> (unit, 'c) stack
+  val push : ('a,'c) var -> ('b,'c) stack -> ('a * 'b, 'c) stack
+
+  type ('a,'b) selection
+  val all: ('a,'a) selection
+  val (!$): ('a,'b) var -> ('a,'b) selection
+  val ($): ('a,'c) selection -> ('b,'c) var -> ('a*'b, 'c) selection
+
+end
+= struct
+
+  type ('a,'b) hdl =
+    | NilCtx : (unit, 'c) hdl
+    | ConsCtx : (('c -> 'a) option * ('b,'c) hdl) -> ('a * 'b, 'c) hdl
+
+  type 'a ctx = ('a, unit) hdl
+
+  type ('a,'b) var_hdl = {
+    extractor: 'c. ('b,'c) hdl -> ('c -> 'a) option;
+    injector: 'c. ('b,'c) hdl -> ('b,'a * 'c) hdl; 
+  }
+
+  type ('a,'b) t = {
+    hdl: ('a,'b) var_hdl;
+    context: 'b ctx;
+  }
+
+  type ('a,'b) stack = ('b,'a) hdl
+
   type ('a,'b) var =
     | Ignore
     | Val of 'a
-    | Var of { key: int; getter: 'b -> 'a }
+    | Var of ('a,'b) t
 
-  let new_key =
-    let next_key = ref 0 in
-    fun () ->
-      let key = !next_key in
-      next_key := key + 1;
-      key
+  type ('a,'b) selection = {
+    project: 'c. ('b,'c) hdl -> 'c -> 'a;
+  }
 
-  let var getter =
-    let key = new_key () in
-    Var { key; getter; }
-
-  let equals x y = match x,y with
-    | Var x, Var y -> x.key = y.key
-    | _ -> false
+  let var x ctx = Var {
+    hdl = x;
+    context = ctx;
+  }
 
   let __ = Ignore
+
   let value x = Val x
-  let var1 () = var id
-  let var2 () = (var fst, var snd)
 
-  let fst3 (x,y,z) = x
-  let snd3 (x,y,z) = y
-  let thr3 (x,y,z) = z
-  let var3 () = (var fst3, var snd3, var thr3)
+  let shift_extractor = function
+    | None -> None
+    | Some extr -> Some (fun (h,t) -> extr t)
 
-  let nth1_4 (x1,x2,x3,x4) = x1
-  let nth2_4 (x1,x2,x3,x4) = x2
-  let nth3_4 (x1,x2,x3,x4) = x3
-  let nth4_4 (x1,x2,x3,x4) = x4
-  let var4 () = (var nth1_4, var nth2_4, var nth3_4, var nth4_4)
+  let rec extend: type a. (a,'b) hdl -> (a, 'c * 'b) hdl = function
+    | ConsCtx (extr, others) -> ConsCtx (shift_extractor extr, extend others)
+    | NilCtx -> NilCtx
 
-  let here (x,y) = x
-  let next f (x,y) = f y
+  let here = {
+    extractor = (function ConsCtx (ext, _) -> ext);
+    injector = (function ConsCtx (_, others) -> ConsCtx (Some fst, extend others));
+  } 
+
+  let next f = {
+    extractor = (function ConsCtx (_, others) -> f.extractor others);
+    injector = (function
+      | ConsCtx(extr, others) -> ConsCtx (shift_extractor extr, f.injector others)
+    );
+  }
+
+  let extractor = function
+    | Ignore -> (fun _ -> None)
+    | Val x -> (fun _ -> Some (fun _ -> x))
+    | Var var -> var.hdl.extractor
+
+  let empty_stack = function
+    | Var var -> var.context
+    | _ -> raise Unboundable
+
+  let push = function
+    | Var var -> var.hdl.injector
+    | _ -> raise Unboundable
+
+  let (!$) = function
+    | Var var -> { project = fun st ->
+      match var.hdl.extractor st with
+      | Some extr -> extr
+      | None -> raise Unbounded
+    }
+    | Val x -> { project = fun _ _ -> x }
+    | Ignore -> { project = fun _ -> raise Unbounded }
+
+  let ($) base = function
+    | Var var -> { project = fun st ->
+      match var.hdl.extractor st with
+      | Some tail_extr ->
+        let head_extr = base.project st in
+        fun s -> (head_extr s, tail_extr s)
+      | None -> raise Unbounded
+    }
+    | Val x -> { project = fun st -> 
+      let head_extr = base.project st in
+      fun s -> (head_extr s, x)
+    }
+    | Ignore -> { project = fun _ -> raise Unbounded }
+
+  let rec extract_all: type a. (a,'b) hdl -> 'b -> a = function
+    | NilCtx -> (fun s -> ())
+    | ConsCtx (None, _) -> raise Unbounded
+    | ConsCtx (Some head_extr, others) ->
+      let tail_extr = extract_all others in
+      fun s -> (head_extr s, tail_extr s)
+
+  let all = { project = extract_all }
+
+  let nil = NilCtx
+  let undef tail = ConsCtx (None, tail)
+
+  let var1 () =
+    let x1 = here in
+    let ctx = undef nil in
+    (var x1 ctx)
+
+  let var2 () =
+    let x1 = here in
+    let x2 = next here in
+    let ctx = undef (undef nil) in
+    (var x1 ctx, var x2 ctx)
+
+  let var3 () =
+    let x1 = here in
+    let x2 = next here in
+    let x3 = next (next here) in
+    let ctx = undef (undef (undef nil)) in
+    (var x1 ctx, var x2 ctx, var x3 ctx)
+
+  let var4 () =
+    let x1 = here in
+    let x2 = next here in
+    let x3 = next (next here) in
+    let x4 = next (next (next here)) in
+    let ctx = undef (undef (undef (undef nil))) in
+    (var x1 ctx, var x2 ctx, var x3 ctx, var x4 ctx)
 
   let var5 () =
     let x1 = here in
@@ -46,7 +204,8 @@ module Var = struct
     let x3 = next (next here) in
     let x4 = next (next (next here)) in
     let x5 = next (next (next (next here))) in
-    (var x1, var x2, var x3, var x4, var x5)
+    let ctx = undef (undef (undef (undef (undef nil)))) in
+    (var x1 ctx, var x2 ctx, var x3 ctx, var x4 ctx, var x5 ctx)
 end
 
 module Make(Schema: Schema.S): Query.S
@@ -63,23 +222,8 @@ module Make(Schema: Schema.S): Query.S
   type 'a clause =
     | Clause: (('a,'c) var * ('a,'b) relation * ('b,'c) var) -> 'c clause
 
-  type ('a,'b) selection = 'b -> 'a
-
   type 'a query =
     | Query: ('a,'b) selection * 'b clause list -> 'a query
-
-  let all = id
-
-  let select_var = function
-    | Var x -> x.getter
-    | Val x -> fun _ -> x
-    | Ignore -> raise (Invalid_argument "An ignored variable cannot be selected")
-
-  let (!$) = select_var
-
-  let ($) selection var =
-    let var = select_var var in
-    fun c -> (selection c, var c)
 
   let select selection query = Query (selection, query)
 

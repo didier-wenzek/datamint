@@ -7,16 +7,30 @@ module type S = sig
   type 'a query
   type ('a,'b) var
 
-  val var1 : unit -> ('a,'a) var
-  val var2 : unit -> ('a,'a*'b) var * ('b,'a*'b) var
-  val var3 : unit -> ('a,'a*'b*'c) var * ('b,'a*'b*'c) var * ('c,'a*'b*'c) var
-  val var4 : unit -> ('a,'a*'b*'c*'d) var * ('b,'a*'b*'c*'d) var * ('c,'a*'b*'c*'d) var * ('d,'a*'b*'c*'d) var
+  val var1 : unit ->
+           ('a, 'a * unit) var
+
+  val var2 : unit ->
+           ('a, 'a * ('b * unit)) var *
+           ('b, 'a * ('b * unit)) var
+
+  val var3 : unit ->
+           ('a, 'a * ('b * ('c * unit))) var *
+           ('b, 'a * ('b * ('c * unit))) var *
+           ('c, 'a * ('b * ('c * unit))) var
+
+  val var4 : unit ->
+           ('a, 'a * ('b * ('c * ('d * unit)))) var *
+           ('b, 'a * ('b * ('c * ('d * unit)))) var *
+           ('c, 'a * ('b * ('c * ('d * unit)))) var *
+           ('d, 'a * ('b * ('c * ('d * unit)))) var
+
   val var5 : unit ->
-           ('a, 'a * ('b * ('c * ('d * ('e * 'f))))) var *
-           ('b, 'a * ('b * ('c * ('d * ('e * 'f))))) var *
-           ('c, 'a * ('b * ('c * ('d * ('e * 'f))))) var *
-           ('d, 'a * ('b * ('c * ('d * ('e * 'f))))) var *
-           ('e, 'a * ('b * ('c * ('d * ('e * 'f))))) var
+           ('a, 'a * ('b * ('c * ('d * ('e * unit))))) var *
+           ('b, 'a * ('b * ('c * ('d * ('e * unit))))) var *
+           ('c, 'a * ('b * ('c * ('d * ('e * unit))))) var *
+           ('d, 'a * ('b * ('c * ('d * ('e * unit))))) var *
+           ('e, 'a * ('b * ('c * ('d * ('e * unit))))) var
 
   val __ : ('a,'b) var
   val value: 'a -> ('a,'b) var
