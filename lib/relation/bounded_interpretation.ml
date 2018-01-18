@@ -3,8 +3,8 @@ module type Col = sig
   type ('a,'b) reducer
   type ('a,'b) mapping
 
-  val singleton: 'a -> ' at
-  val optional: 'a option -> ' at
+  val singleton: 'a -> 'a t
+  val optional: 'a option -> 'a t
 
   val map: ('a -> 'b) -> 'a t -> 'b t
   val filter: ('a -> bool) -> 'a t -> 'a t
@@ -16,6 +16,8 @@ module type Col = sig
   val pairs: ('a,'b) mapping -> ('a * 'b) t
   val keys: ('a,'b) mapping -> 'a t
   val values_of_key: ('a,'b) mapping -> 'a -> 'b t
+  val grouping_reducer: ('a -> 'k) -> ('a -> 'v) -> ('a, ('k,'v) mapping) reducer
+  val mapping_reducer: ('a -> 'k) -> ('a -> 'v) -> ('v, 'w t) reducer -> ('a, ('k,'w) mapping) reducer
 
   val member: 'a t -> 'a -> bool
   val related: ('a,'b) mapping -> 'a -> 'b -> bool
@@ -85,9 +87,9 @@ module Make(Col: Col) : Interpretation.S
     fun get_a -> Col.filter (fun c -> chk (get_a c))
 
   let rel_of_col col = {
-    gen = Capability.map (fun elts -> Col.map (fun e -> ((),e)) elts ) col.gen_mem;
+    gen = Capability.map (fun elts -> Col.map (fun e -> ((),e)) elts) col.gen_mem;
     map = Capability.map (fun elts () -> elts) col.gen_mem;
-    inv = Capability.some (fun a -> Col.singleton (if col.chk_mem a then Some () else None));
+    inv = Capability.some (fun a -> Col.optional (if col.chk_mem a then Some () else None));
     chk = (fun () a -> col.chk_mem a);
   }
 
@@ -99,7 +101,7 @@ module Make(Col: Col) : Interpretation.S
   let rel_of_mapping m = {
     gen = Capability.some (Col.pairs m);
     map = Capability.some (Col.values_of_key m);
-    inv = Capability.some (fun b -> Col.filter (fun a -> Col.member (Col.values_of_key m a) b) (Col.keys m));
+    inv = Capability.some (fun v -> Col.filter (fun k -> Col.member (Col.values_of_key m k) v) (Col.keys m));
     chk = Col.related m;
   }
 
@@ -111,8 +113,10 @@ module Make(Col: Col) : Interpretation.S
   let reduce red get_v =
     fun c -> c |> Col.map get_v |> Col.reduce red |> col_of_col
 
-  let group get_k get_v = raise (Invalid_argument "Not implemenented")
+  let group get_k get_v =
+    fun c -> c |> Col.reduce (Col.grouping_reducer get_k get_v) |> rel_of_mapping
 
-  let group_reduce red get_k get_v m = raise (Invalid_argument "Not implemenented")
+  let group_reduce red get_k get_v =
+    fun c -> c |> Col.reduce (Col.mapping_reducer get_k get_v red) |> rel_of_mapping
 
 end
