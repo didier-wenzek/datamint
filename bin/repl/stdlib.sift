@@ -68,6 +68,7 @@ and_reducer = monoid_with_maximum true (and) false
 or_reducer = monoid_with_maximum false (or) true
 forall p = map p >> reduce and_reducer
 exists p = map p >> reduce or_reducer
+is_empty = forall (constant false)
 # c_forall p = c_map p >> c_reduce and_reducer
 # c_exists p = c_map p >> c_reduce or_reducer
 
@@ -145,3 +146,9 @@ tumbling_window w time = group (x -> get_tumbling_window w (time x)) id
 
 get_sliding_windows w t = 0 .. (w.size / w.slide) |> map (shift -> (get_tumbling_window {size = w.slide, offset = w.offset} t) - shift)
 sliding_windows w time red = unnest (x -> get_sliding_windows w (time x)) >> group fst snd red
+
+window_of n = transduce {
+  seed = (0,[])
+  term (k,xs) = if_then_else (k<n) (() -> []) (() -> [xs])
+  step x (k,xs) = if_then_else (k < n) (() -> ((k+1, sonc xs x),[])) (() -> ((n, drop 1 (sonc xs x)), [xs])) 
+}
