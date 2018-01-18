@@ -8,7 +8,6 @@ module type S = sig
 
   val collection_of_dataset: 'a dataset -> 'a collection
   val collection_of_list: 'a list -> 'a collection
-  val relation_of_function: ('a -> 'b) -> ('a,'b) relation
   val relation_of_plural_function: ('a -> 'b dataset) -> ('a,'b) relation
   val relation_of_mapping: ('a,'b) mapping -> ('a,'b) relation
   val relation_of_mapping_with_inv: ('a,'b) mapping -> ('b -> 'a) -> ('a,'b) relation
@@ -36,6 +35,8 @@ module Make(Dataset: Dataset.S): S
   type ('a,'b,'c) injector = 'a -> 'b -> 'c
 
   let unit_value = Dataset.singleton ()
+
+  let project = Dataset.map
 
   let filter rel =
     Option.when_defined rel.chk $$ fun chk ->

@@ -2,6 +2,7 @@ open Util
 
 exception Unbounded
 exception Unboundable
+exception NoPlan
 
 module Var : sig
   type ('a,'context) var
@@ -73,7 +74,8 @@ module Var : sig
 
   val extractor : ('a,'c) var -> ('b,'c) stack_layout -> ('b -> 'a) option
   val empty_stack: ('a,'c) var -> (unit, 'c) stack_layout
-  val push : ('a,'c) var -> ('b,'c) stack_layout -> ('a * 'b, 'c) stack_layout
+  val push_var: ('a,'c) var -> ('b,'c) stack_layout -> ('a * 'b, 'c) stack_layout
+  val push_val: 'a -> 'b -> ('b * 'a)
 
   val all: ('a,'a) selection
   (** Select all the variables of the context,
@@ -85,6 +87,9 @@ module Var : sig
   val ($): ('a,'c) selection -> ('b,'c) var -> ('a*'b, 'c) selection
   (** Add the given variable to the selection. *)
 
+  val selection_extractor: ('a, 'context) selection -> ('b, 'context) stack_layout -> ('b -> 'a)
+  (** [selection_extractor selection stack_layout]
+      returns the function to extract the selection of the stack. *)
 end
 = struct
 
@@ -146,9 +151,11 @@ end
     | Var var -> var.empty_layout
     | _ -> raise Unboundable
 
-  let push = function
+  let push_var = function
     | Var var -> var.injector
     | _ -> raise Unboundable
+
+  let push_val s x = (x,s)
 
   let (!$) = function
     | Var var -> { project = fun st ->
@@ -172,6 +179,9 @@ end
       fun s -> (head_extr s, x)
     }
     | Ignore -> { project = fun _ -> raise Unbounded }
+
+  let selection_extractor selection stack_layout =
+    selection.project stack_layout
 
   let rec extract_all: type a. ('b,a) stack_layout -> 'b -> a = function
     | NilCtx -> (fun s -> ())
@@ -227,16 +237,111 @@ module Make(Schema: Schema.S): Query.S
   type 'a collection = 'a Schema.collection
   type 'a result = 'a Schema.value
 
-  type 'a clause =
-    | Clause: (('a,'c) var * ('a,'b) relation * ('b,'c) var) -> 'c clause
+  type 'context clause =
+    | Clause: (('a,'context) var * ('a,'b) relation * ('b,'context) var) -> 'context clause
 
   type 'a query =
-    | Query: ('a,'b) selection * 'b clause list -> 'a query
+    | Query: ('a,'context) selection * 'context clause list -> 'a query
+
+  type 'context plan =
+    | Plan: ('stack, 'context) stack_layout * (unit result -> 'stack result) -> 'context plan
 
   let select selection query = Query (selection, query)
 
   let (!!) x rel y = Clause (x,rel,y)
 
-  let run q = raise (Invalid_argument "Not implemented")
+  (* Naive compilation:
+     it peeks the first clause which can be applied,
+     looping until there is no more clause.
+
+     It raises the NoPlan exception if stuck. *)
+  let compile =
+    let then_filter (Plan (stack_layout, query)) (Clause (x,rel,y)) =
+      match Schema.filter rel, extractor x stack_layout, extractor y stack_layout with
+      | Some filter, Some x_extr, Some y_extr ->
+        Some (Plan(stack_layout, query >> filter x_extr y_extr))
+      | _ -> None
+    in
+
+    let then_map (Plan (stack_layout, query)) (Clause (x,rel,y)) =
+      match Schema.map rel, extractor x stack_layout, extractor y stack_layout with
+      | Some map, Some x_extr, None ->
+        Some (Plan(push_var y stack_layout, query >> map x_extr push_val))
+      | _ -> None
+    in
+
+    let then_inv (Plan (stack_layout, query)) (Clause (x,rel,y)) =
+      match Schema.inv_map rel, extractor x stack_layout, extractor y stack_layout with
+      | Some inv, None, Some y_extr ->
+        Some (Plan(push_var x stack_layout, query >> inv push_val y_extr))
+      | _ -> None
+    in
+
+    let then_gen (Plan (stack_layout, query)) (Clause (x,rel,y)) =
+      match Schema.generate rel, extractor x stack_layout, extractor y stack_layout with
+      | Some gen, None, None ->
+        Some (Plan(stack_layout |> push_var x |> push_var y, query >> gen push_val push_val))
+      | _ -> None
+    in
+
+    let then_apply op plan =
+      let rec loop discarded = function
+        | [] -> raise NoPlan             (* FIXME *)
+        | clause :: others -> (
+          match op plan clause with
+          | None -> loop (clause::discarded) others
+          | Some updated_plan -> (updated_plan, List.rev_append discarded others)
+        )
+      in loop []
+    in
+
+    let then_apply_in_turn ops plan clauses =
+      let rec loop = function
+        | [] -> raise NoPlan             (* FIXME *)
+        | op :: others -> (
+          try then_apply op plan clauses
+          with NoPlan -> loop others
+        )
+      in
+      loop ops
+    in
+
+    let rec loop plan = function
+      | [] -> plan
+      | clauses ->
+        let updated_plan, remaining_clauses =
+          then_apply_in_turn [then_filter; then_map; then_inv; then_gen] plan clauses
+        in
+        loop updated_plan remaining_clauses
+    in
+
+    let init_plan =
+      let stack_of_var x =
+        try Some (empty_stack x)
+        with Unboundable -> None
+      in
+      let stack_of_clause (Clause (x,_,y)) =
+        match stack_of_var x with
+        | None -> stack_of_var y
+        | s -> s
+      in
+      let rec stack_of_clauses = function
+        | [] -> raise NoPlan             (* FIXME *) 
+        | c :: cs ->
+          match stack_of_clause c with
+          | None -> stack_of_clauses cs
+          | Some s -> s
+      in
+      fun clauses ->
+        Plan (stack_of_clauses clauses, id)
+    in
+
+    fun clauses ->
+      loop (init_plan clauses) clauses
+
+  let run (Query (selection, clauses)) =
+    let Plan(stack_layout,query) = compile clauses in
+    let projection = selection_extractor selection stack_layout in
+    Schema.unit_value |> query |> Schema.project projection
 end
 

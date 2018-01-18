@@ -15,10 +15,14 @@ module type S = sig
   val rel_of_col: 'a collection -> (unit,'a) relation
   val col_of_rel: (unit,'a) relation -> 'a collection
 
+  val relation_of_function: ('a -> 'b) -> ('a,'b) relation
+
   type ('a,'b) extractor = 'a -> 'b
   type ('a,'b,'c) injector = 'a -> 'b -> 'c
 
   val unit_value: unit value
+
+  val project: ('a -> 'b) -> 'a value -> 'b value
 
   val filter: ('a,'b) relation -> (('c,'a) extractor -> ('c,'b) extractor -> 'c value -> 'c value) option
   val map: ('a,'b) relation -> (('c,'a) extractor -> ('c,'b,'d) injector -> 'c value -> 'd value) option
