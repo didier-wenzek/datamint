@@ -18,12 +18,15 @@ type 'a expr =
   | Or of 'a expr * 'a expr
   | Not of 'a expr
 
-type 'a lower_bound =
+(** The type of normalized ranges *)
+type 'a range = 'a lower_bound * 'a upper_bound
+  
+and 'a lower_bound =
   | NoLB
   | SomeGT of 'a
   | SomeGE of 'a
 
-type 'a upper_bound =
+and 'a upper_bound =
   | NoUB
   | SomeLT of 'a
   | SomeLE of 'a
@@ -56,13 +59,16 @@ module Make(Elt: Map.OrderedType) : sig
   val contain: elt -> elt t -> bool
   val overlap: elt t -> elt t -> bool
 
+  val is_empty: elt range -> bool
+
   (** Returns the sorted minimal disjonctive normal form of the expression.
 
       The result is minimal:
-      - all conjonctions are either a range or an half-ranges,
+      - each conjonction is either a range or a half-range,
       - no conjonction overlap.
+
       The result is sorted:
       - the conjonction ranges are sorted in increasing bounds order. *)
-  val smdnf: elt expr -> (elt lower_bound * elt upper_bound) list
+  val smdnf: elt expr -> elt range list
 
 end

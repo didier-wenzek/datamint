@@ -24,6 +24,8 @@ type 'a upper_bound =
   | SomeLT of 'a
   | SomeLE of 'a
 
+type 'a range = 'a lower_bound * 'a upper_bound
+
 let rec remove_negation = function
   | Not (Not e) -> remove_negation e
   | Not (And (e,f)) -> Or (remove_negation (Not e), remove_negation (Not f))
@@ -206,30 +208,4 @@ module Make(Elt: Map.OrderedType) = struct
     |> List.sort increasing_lower_bounds
     |> List.fold_left union []
 
-  module Expr = struct
-    type nf =
-      | EmptyRange
-      | FullRange
-      | UnionMax of elt * bool * nf  (* UnionMax(x_max, false, xs) = {x | x < x_max} union xs
-                                        UnionMax(x_max, true, xs) = {x | x <= x_max} union xs *)
-      | InterMin of elt * bool * nf  (* InterMin(x_min, false, xs) = {x | x > x_min} inter xs 
-                                        InterMin(x_min, true, xs) = {x | x >= x_min} inter xs *)
-  end
-
-  module ExprBis = struct
-    type nf =
-      | Union of union
-      | Inter of inter
-
-    and union =
-      | FullSet
-      | UnionLT of elt * inter      (** [UnionLT(x_max, xs)] is the set [{ x | x <  x_max} union xs }] *)
-      | UnionLE of elt * inter      (** [UnionLE(x_max, xs)] is the set [{ x | x <= x_max} union xs }] *)
-
-    and inter =
-      | EmptySet
-      | InterGT of elt * union      (** [InterGT(x_min, xs)] is the set [{ x | x >  x_min} inter xs }] *)
-      | InterGE of elt * union      (** [InterGE(x_min, xs)] is the set [{ x | x >= x_min} inter xs }] *)
-  end
-   
 end
