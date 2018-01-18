@@ -108,11 +108,11 @@ module Make(Col: Col) : Interpretation.S
     chk_mem = Col.member col;
   }
 
-  let reduce get_v red =
+  let reduce red get_v =
     fun c -> c |> Col.map get_v |> Col.reduce red |> col_of_col
 
   let group get_k get_v = raise (Invalid_argument "Not implemenented")
 
-  let group_reduce get_k get_v red m = raise (Invalid_argument "Not implemenented")
+  let group_reduce red get_k get_v m = raise (Invalid_argument "Not implemenented")
 
 end

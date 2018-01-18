@@ -32,9 +32,9 @@ let filter   rel _ _ = Multiplicity.make_partial
 let generate_member col _ = Multiplicity.mult col
 let filter_member   col _ = Multiplicity.make_partial
 
-let reduce _ red _         = red
+let reduce red _ _         = red
 let group _ _ m            = { gen = m; map = Multiplicity.at_least_one; inv = Multiplicity.zero_or_more }
-let group_reduce _ _ red m = { gen = m; map = red; inv = Multiplicity.zero_or_more } 
+let group_reduce red _ _ m = { gen = m; map = red; inv = Multiplicity.zero_or_more } 
 
 let rel_of_col col = { gen = col; map = col; inv = Multiplicity.at_most_one }
 let col_of_rel rel = rel.gen

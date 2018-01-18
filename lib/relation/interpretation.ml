@@ -30,20 +30,21 @@ module type S = sig
       A query will be interpreted as a transformation of some ['a records] into some ['b records]. *)
 
   type ('a,'b) extractor
-  (** Extract a field of a record.
+  (** Extract a field of type ['b] from a record of type ['a]..
 
       Typically equals to the function type: ['a -> 'b]. *)
 
   type ('a,'b,'c) injector
-  (** Inject a field value into a record, making an extended record.
+  (** Inject a field value of type ['b] into a record of type ['a],
+      making an extended record of type ['c]..
 
       Typically equals to the function type: ['a -> 'b -> 'c]. *)
 
   val record_source: unit records
-  (** The stream to be used as the source of a query pipeline. *)
+  (** The source of a query pipeline. *)
 
   val generate: ('a,'b, gen_cap,'a_gen,'b_gen) relation -> ('c,'a,'d) injector ->  ('d,'b,'e) injector -> 'c records -> 'e records
-  (** Generates all pairs of a relation.
+  (** Generate all pairs of a relation.
 
       The relation must have the capability to generate its pairs.
       Use the two injectors to extend a source record with the left and right value of the pair. *)
@@ -78,9 +79,14 @@ module type S = sig
 
       Use the extractor function to get the candidate item of an input record. *)
 
-  val reduce: ('a,'b) extractor -> ('b,'c) reducer -> 'a records -> ('c,gen_cap) collection
+  val reduce: ('a,'b) reducer -> ('c,'a) extractor -> 'c records -> ('b,gen_cap) collection
+  (** Reduce a stream of records into a collection.
+
+      Use the extractor function to get the field to be reduced. *)
+
   val group: ('a,'b) extractor -> ('a,'c) extractor -> 'a records -> ('b,'c,gen_cap,gen_cap,gen_cap) relation
-  val group_reduce: ('a,'b) extractor -> ('a,'c) extractor -> ('c,'d) reducer -> 'a records -> ('b,'d,gen_cap,gen_cap,gen_cap) relation
+
+  val group_reduce: ('c,'d) reducer -> ('a,'b) extractor -> ('a,'c) extractor -> 'a records -> ('b,'d,gen_cap,gen_cap,gen_cap) relation
 
   val rel_of_col: ('a,'a_gen) collection -> (unit,'a,'a_gen,'a_gen,gen_cap) relation
   (** [rel_of_col c] is the relation which associates the unit value with the collection [c]. *)
