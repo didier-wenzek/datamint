@@ -43,7 +43,7 @@ module type S = sig
   val record_source: unit records
   (** The source of a query pipeline. *)
 
-  val project: ('a -> 'b) -> 'a records -> 'b records
+  val map: ('a -> 'b) -> 'a records -> 'b records
 
   val generate: ('a,'b, gen_cap,'a_gen,'b_gen) relation -> ('c,'a,'d) injector ->  ('d,'b,'e) injector -> 'c records -> 'e records
   (** Generate all pairs of a relation.
@@ -53,7 +53,7 @@ module type S = sig
 
   val gen_cap: ('a,'b, 'ab_gen,'a_gen,'b_gen) relation -> (('c,'a,'d) injector ->  ('d,'b,'e) injector -> 'c records -> 'e records, 'ab_gen) Capability.t
 
-  val map: ('a,'b, 'ab_gen,gen_cap,'b_gen) relation -> ('c,'a) extractor -> ('c,'b,'d) injector -> 'c records -> 'd records
+  val map_rel: ('a,'b, 'ab_gen,gen_cap,'b_gen) relation -> ('c,'a) extractor -> ('c,'b,'d) injector -> 'c records -> 'd records
   (** Map left values to their related right values.
 
       The relation must have the capability to generate right values given a left value.
@@ -62,7 +62,7 @@ module type S = sig
 
   val map_cap: ('a,'b, 'ab_gen,'a_gen,'b_gen) relation -> (('c,'a) extractor -> ('c,'b,'d) injector -> 'c records -> 'd records, 'a_gen) Capability.t
 
-  val inv_map: ('a,'b, 'ab_gen,'a_gen,gen_cap) relation -> ('c,'a,'d) injector -> ('c,'b) extractor -> 'c records -> 'd records
+  val inv_rel: ('a,'b, 'ab_gen,'a_gen,gen_cap) relation -> ('c,'a,'d) injector -> ('c,'b) extractor -> 'c records -> 'd records
   (** Map right values to their related left values.
 
       The relation must have the capability to generate left values given a right value.

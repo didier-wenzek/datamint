@@ -24,10 +24,10 @@ type ('a,'b,'c) injector = 'a -> 'b -> 'c
 
 let record_source = Multiplicity.unit
 
-let project f m = m
+let map f m = m
 let generate rel _ _ = Multiplicity.mult (Capability.get rel.gen)
-let map      rel _ _ = Multiplicity.mult (Capability.get rel.map)
-let inv_map  rel _ _ = Multiplicity.mult (Capability.get rel.inv)
+let map_rel  rel _ _ = Multiplicity.mult (Capability.get rel.map)
+let inv_rel  rel _ _ = Multiplicity.mult (Capability.get rel.inv)
 let filter   rel _ _ = Multiplicity.make_partial
 
 let gen_cap rel = Capability.map (fun factor _ _ -> Multiplicity.mult factor) rel.gen

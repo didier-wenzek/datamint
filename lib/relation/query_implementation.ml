@@ -336,5 +336,5 @@ module Make(Schema: Interpretation.S): Query.S
   let run (Query (selection, clauses)) =
     let Plan(stack_layout,query) = compile clauses in
     let projection = selection_extractor selection stack_layout in
-    Schema.record_source |> query |> Schema.project projection
+    Schema.record_source |> query |> Schema.map projection
 end
