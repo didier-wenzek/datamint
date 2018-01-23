@@ -29,12 +29,12 @@ module type S = sig
 
       A query will be interpreted as a transformation of some ['a records] into some ['b records]. *)
 
-  type ('a,'b) extractor
+  type ('a,'b) extractor = 'a -> 'b
   (** Extract a field of type ['b] from a record of type ['a]..
 
       Typically equals to the function type: ['a -> 'b]. *)
 
-  type ('a,'b,'c) injector
+  type ('a,'b,'c) injector = 'a -> 'b -> 'c
   (** Inject a field value of type ['b] into a record of type ['a],
       making an extended record of type ['c]..
 
@@ -43,25 +43,33 @@ module type S = sig
   val record_source: unit records
   (** The source of a query pipeline. *)
 
+  val project: ('a -> 'b) -> 'a records -> 'b records
+
   val generate: ('a,'b, gen_cap,'a_gen,'b_gen) relation -> ('c,'a,'d) injector ->  ('d,'b,'e) injector -> 'c records -> 'e records
   (** Generate all pairs of a relation.
 
       The relation must have the capability to generate its pairs.
       Use the two injectors to extend a source record with the left and right value of the pair. *)
 
-  val map: ('a,'b, 'ab_gen,gen_cap,'b_cap) relation -> ('c,'a) extractor -> ('c,'b,'d) injector -> 'c records -> 'd records
+  val gen_cap: ('a,'b, 'ab_gen,'a_gen,'b_gen) relation -> (('c,'a,'d) injector ->  ('d,'b,'e) injector -> 'c records -> 'e records, 'ab_gen) Capability.t
+
+  val map: ('a,'b, 'ab_gen,gen_cap,'b_gen) relation -> ('c,'a) extractor -> ('c,'b,'d) injector -> 'c records -> 'd records
   (** Map left values to their related right values.
 
       The relation must have the capability to generate right values given a left value.
       Use the extractor function to get the left value of an input record.
       Use the injector function to add a right value into a source record. *)
 
-  val inv_map: ('a,'b, 'ab_gen,'a_cap,gen_cap) relation -> ('c,'a,'d) injector -> ('c,'b) extractor -> 'c records -> 'd records
+  val map_cap: ('a,'b, 'ab_gen,'a_gen,'b_gen) relation -> (('c,'a) extractor -> ('c,'b,'d) injector -> 'c records -> 'd records, 'a_gen) Capability.t
+
+  val inv_map: ('a,'b, 'ab_gen,'a_gen,gen_cap) relation -> ('c,'a,'d) injector -> ('c,'b) extractor -> 'c records -> 'd records
   (** Map right values to their related left values.
 
       The relation must have the capability to generate left values given a right value.
       Use the extractor function to get the right value of an input record.
       Use the injector function to add a left value into a source record. *)
+
+  val inv_cap: ('a,'b, 'ab_gen,'a_gen,'b_gen) relation -> (('c,'a,'d) injector -> ('c,'b) extractor -> 'c records -> 'd records, 'b_gen) Capability.t
 
   val filter: ('a,'b, 'ab_gen,'a_gen,'b_gen) relation -> ('c,'a) extractor -> ('c,'b) extractor -> 'c records -> 'c records
   (** Filter pairs which are unrelated.

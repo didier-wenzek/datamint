@@ -57,6 +57,15 @@ module Make(Col: Col) : Interpretation.S
 
   let record_source  = Col.singleton ()
 
+  let project = Col.map
+
+  let gen_pairs gen set_a set_b =
+    let pair c (a,b) =
+       let d = set_a c a 
+       in set_b d b
+     in
+    Col.flatmap (fun c -> Col.map (pair c) gen)
+
   let generate rel =
     let gen = Capability.get rel.gen in
     fun set_a set_b ->
@@ -66,13 +75,21 @@ module Make(Col: Col) : Interpretation.S
       in
       Col.flatmap (fun c -> Col.map (pair c) gen)
 
+  let gen_cap rel = Capability.map gen_pairs rel.gen
+
   let map rel =
     let map = Capability.get rel.map in
     fun get_a set_b -> Col.flatmap (fun c -> map (get_a c) |> Col.map (set_b c))
 
+  let map_cap rel =
+    Capability.map (fun map get_a set_b -> Col.flatmap (fun c -> map (get_a c) |> Col.map (set_b c))) rel.map
+
   let inv_map rel =
     let inv = Capability.get rel.inv in
     fun set_a get_b -> Col.flatmap (fun c -> inv (get_b c) |> Col.map (set_a c))
+
+  let inv_cap rel =
+    Capability.map (fun inv set_a get_b -> Col.flatmap (fun c -> inv (get_b c) |> Col.map (set_a c))) rel.inv
 
   let filter rel =
     let chk = rel.chk in
