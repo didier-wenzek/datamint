@@ -15,3 +15,12 @@ let lwt_action push = {
   cont = Lwt.bind;
   term = Lwt.return;
 }
+
+let cap_with capped red = {
+  red with
+  cont = (fun xp f -> red.cont xp (fun x ->
+    if capped x
+    then red.term x
+    else f x
+  ));
+}

@@ -7,6 +7,7 @@ module type S = sig
   val insert: 'a elt -> 'a t -> 'a t
   val combine: 'a t -> 'a t -> 'a t
   val elements: 'a t -> 'a res Series.t
+  val maximum_opt: ('a t -> bool) option
 end
 
 module Extend(M: S) = struct
@@ -14,7 +15,17 @@ module Extend(M: S) = struct
 
   let single x = insert x empty
 
-  let fold red xs = Series.fold_sync xs insert empty
+(*
+  let insert_action =
+    let action = Action.sync_action insert in
+    match maximum_opt with
+      | None -> action
+      | Some maximum -> Action.cap_with maximum action
+
+  let fold xs =
+    Series.fold xs insert_action empty
+*)
+
 end
 
 module Sum : S
@@ -30,6 +41,7 @@ module Sum : S
   let insert = (+)
   let combine = (+)
   let elements = Series.single
+  let maximum_opt = None
 end
 
 module Count : S
@@ -45,6 +57,23 @@ module Count : S
   let insert x = succ
   let combine = (+)
   let elements = Series.single
+  let maximum_opt = None
+end
+
+module Forall : S
+  with type 'a t = bool
+  and  type 'a elt = bool
+  and  type 'a res = bool
+= struct
+  type 'a t = bool
+  type 'a elt = bool
+  type 'a res = bool
+
+  let empty = true
+  let insert = (&&)
+  let combine = (&&)
+  let elements = Series.single
+  let maximum_opt = Some not
 end
 
 module Bag : S                                                                                                                                                                                        
@@ -60,5 +89,6 @@ module Bag : S
   let insert = List.cons
   let combine = List.rev_append
   let elements = Series.of_list
+  let maximum_opt = None
 end
 
