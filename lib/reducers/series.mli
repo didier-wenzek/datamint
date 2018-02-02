@@ -13,3 +13,9 @@ val single: 'a -> 'a t
 val of_list: 'a list -> 'a t
 
 val range: int -> int -> int t
+
+val map: ('a -> 'b) -> 'a t -> 'b t
+
+val filter: ('a -> bool) -> 'a t -> 'a t
+
+val flat_map: ('a -> 'b t) -> 'a t -> 'b t

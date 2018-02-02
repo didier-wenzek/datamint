@@ -35,3 +35,17 @@ let of_list xs =
   in
   { fold }
 
+let map f xs =
+  let fold red = xs.fold (Action.map f red) in
+  { fold }
+
+let filter p xs =
+  let fold red = xs.fold (Action.filter p red) in
+  { fold }
+
+let iter red xs = xs.fold red
+
+let flat_map f xs =
+  let fold red = xs.fold (Action.flat_map iter f red) in
+  { fold }
+
