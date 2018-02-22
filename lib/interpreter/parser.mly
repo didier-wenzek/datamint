@@ -61,6 +61,14 @@
   let desugar_case cases otherwise =
     desugar_case (List.rev cases) otherwise
 
+  let desugar_if_then_else test if_true if_false = Expr.(
+    App ( App ( App (
+      Var "if_then_else",
+        test),
+        Fun ("()", if_true)),
+        Fun ("()", if_false))
+  )
+
   let desugar_list = Expr.(
     List.fold_left (fun xs x -> App (App (Var "sonc", xs), x)) (Var "empty_sequence") 
   )
@@ -254,6 +262,8 @@ expr:
 | CASES L_CURL case_seq R_CURL         { desugar_case $3 empty_case }
 | CASE expr OF L_PAR expr R_PAR        { Expr.Switch ($2, $5) }
 | CASE expr OF L_CURL case_seq R_CURL  { Expr.Switch ($2, desugar_case $5 empty_case) }
+
+| IF expr THEN expr ELSE expr %prec EQ { desugar_if_then_else $2 $4 $6 }
 ;
 
 callseq:

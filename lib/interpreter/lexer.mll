@@ -50,6 +50,9 @@ rule token = parse
   | "case"          { CASE }
   | "cases"         { CASES }
   | "of"            { OF }
+  | "if"            { IF }
+  | "then"          { THEN }
+  | "else"          { ELSE }
 
   | '-'             { MINUS }
   | op as s         { match Pars.get_operator s with

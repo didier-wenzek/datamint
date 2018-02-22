@@ -223,6 +223,12 @@ let suite =
   test_eval "string_extract \"[a-z]\" \"   a,  b, c\""                              [ "[\"a\", \"b\", \"c\"]" ];
   test_eval "[]"                                                                    [ "[]" ];
   test_eval "() -> 2"                                                               [ "() -> Int" ];
+  test_eval "if true then 1 else 2"                                                 [ "1" ];
+  test_eval "if false then 1 else 2"                                                [ "2" ];
+  test_eval "if true then 1 else 2 + 1"                                             [ "1" ];
+  test_eval "(if true then 1 else 2) + 1"                                           [ "2" ];
+  test_eval "if false then 1 else 2 + 1"                                            [ "3" ];
+  test_eval "(if false then 1 else 2) + 1"                                          [ "3" ];
   test_eval "(() -> 1) ()"                                                          [ "1" ];
   test_eval "case A(2) of { A(x) -> x + 1, B(x) -> x * x }"                         [ "3" ];
   test_eval "case B(2) of { A(x) -> x + 1, B(x) -> x * x }"                         [ "4" ];
@@ -231,7 +237,7 @@ let suite =
   test_eval "c = cases { A(x) -> x+1, B(x) -> x*x, C(_) -> 0 }, case B(2) of (c)"   [ "c : forall a. either { A(Int), B(Int), C(a) } -> Int"; "4" ];
   test_eval "case A(1) of { A(x) -> \"first\", A(x) -> \"second\" }"                [ "\"first\"" ];
   test_eval "show_sign = cases { Pos(x) -> \"positive\", Neg(x) -> \"negative\" }
-             sign x = if_then_else (x >= 0) (() -> Pos(x)) (() -> Neg(x))
+             sign x = if x >= 0 then Pos(x) else Neg(x)
              case (sign 3) of (show_sign)
              case (sign (-3)) of (show_sign)"                                       [ "show_sign : forall a, b. either { Pos(b), Neg(a) } -> String";
                                                                                       "sign : forall a union, b. Int -> either { Neg(Int), Pos(Int) } or a";
