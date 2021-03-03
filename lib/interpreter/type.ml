@@ -128,7 +128,7 @@ let type_vars_expr push =
   in loop
 
 let type_vars_constraint push vars =
-  let push_field_vars name type_expr vars = type_vars_expr push vars type_expr in
+  let push_field_vars _name type_expr vars = type_vars_expr push vars type_expr in
   function
   | NoConstraint -> vars
   | RequiredFields fields ->
@@ -151,7 +151,7 @@ let show_expr constraints show_var =
       | Some r, fields -> (show r)^" with { "^(show_record fields)^" }"
     )
     | CaseType (options, t) -> (show_options options)^" -> "^(show t)
-    | SumType (options, t) -> show_options options
+    | SumType (options, _t) -> show_options options
     | GeneratorType a -> "["^(show a)^"]"
     | ReducerType (a,b,c) -> "Reducer("^(show a)^", "^(show b)^", "^(show c)^")"
     | MappingType (a,b) -> "{" ^ (show a)^" -> "^(show b) ^ "}"
@@ -192,7 +192,7 @@ let show_constraint show_type =
     | (x, NoConstraint) -> x
     | (x, RequiredFields fields) ->
       match FieldSet.bindings fields with
-      | (f_name, f_type)::_ when is_constructor_name f_name ->
+      | (f_name, _f_type)::_ when is_constructor_name f_name ->
         x ^ " union"
       | fields ->
         x ^ " with { " ^ (show_row fields) ^ " }"
@@ -460,7 +460,7 @@ and merge_constraints c1 c2 = match c1,c2 with
 
   | RequiredFields f1, RequiredFields f2
   -> let fields =
-      FieldSet.merge (fun k of1 of2 -> match of1,of2 with
+      FieldSet.merge (fun _k of1 of2 -> match of1,of2 with
         | Some f1, Some f2 -> unify f1 f2; of1
         | None, None -> None
         | None, _ -> of2  
@@ -470,7 +470,7 @@ and merge_constraints c1 c2 = match c1,c2 with
     RequiredFields fields
 
 and apply_constraint t c = match t,c with
-  | t, NoConstraint
+  | _t, NoConstraint
   -> ()
 
   | TypeVar x, c

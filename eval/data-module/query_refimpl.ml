@@ -122,7 +122,7 @@ end
 
   let shift_extractor = function
     | None -> None
-    | Some extr -> Some (fun (h,t) -> extr t)
+    | Some extr -> Some (fun (_,t) -> extr t)
 
   let rec extend: type a. ('b,a) stack_layout -> ('c * 'b, a) stack_layout = function
     | ConsCtx (extr, others) -> ConsCtx (shift_extractor extr, extend others)
@@ -184,7 +184,7 @@ end
     selection.project stack_layout
 
   let rec extract_all: type a. ('b,a) stack_layout -> 'b -> a = function
-    | NilCtx -> (fun s -> ())
+    | NilCtx -> (fun _ -> ())
     | ConsCtx (None, _) -> raise Unbounded
     | ConsCtx (Some head_extr, others) ->
       let tail_extr = extract_all others in

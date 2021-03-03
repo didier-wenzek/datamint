@@ -1,6 +1,6 @@
 let id x = x
 let (>>) f g x = g (f x)
-let constant c x = c
+let constant c _ = c
 
 (* Function that lets you return early from a computation.
    Adapted from Alan Frish's version of https://ocaml.janestreet.com/?q=node/91,

@@ -65,7 +65,7 @@ module Make(Dataset: Dataset.S): S
 
   let filter_members col =
     Option.when_defined (filter col) $$ fun filter ->
-    fun get_a -> filter (fun x -> ()) get_a
+    fun get_a -> filter (fun _ -> ()) get_a
 
   let rel = {
     gen = None;
@@ -74,7 +74,7 @@ module Make(Dataset: Dataset.S): S
     chk = None;
   }
 
-  let rel_of_function make_dataset f = {
+  let _rel_of_function make_dataset f = {
     rel with
     map = Some (fun x -> make_dataset (f x));
     chk = Some (fun x y -> Dataset.exists (fun x -> x = y) (make_dataset (f x)));

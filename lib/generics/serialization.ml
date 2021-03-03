@@ -48,7 +48,7 @@ let format_decoder: format -> 'a Repr.t -> string -> 'a Result.t =
   fun format -> 
     let format_decoder = format.decoder in
     let module F = (val format_decoder : Decoder) in
-    let decoder = Repr.(
+    let decoder = (
       fun (type a) repr -> 
         let module R = (val repr : Repr.S with type a = a) in 
         let module N = R.Interpret (F)
@@ -61,7 +61,7 @@ let format_encoder: format -> 'a Repr.t -> 'a -> string Result.t =
   fun format ->
     let format_encoder = format.encoder in
     let module F = (val format_encoder: Encoder) in
-    let encoder = Repr.(
+    let encoder = (
       fun (type a) repr -> 
         let module R = (val repr : Repr.S with type a = a) in 
         let module N = R.Interpret (F)

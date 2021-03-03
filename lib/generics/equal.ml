@@ -25,7 +25,7 @@ module EqIntr : Interpretation.S
   (* Records *)
 
   let empty_record = unit
-  let field name field_eq = field_eq
+  let field _name field_eq = field_eq
   let (&) = pair
   let record = tuple
 
@@ -39,8 +39,7 @@ module EqIntr : Interpretation.S
 end
 
 let generic: 'a Repr.t -> 'a equal =
-  let open Repr in
-    fun (type a) repr -> 
-      let module R = (val repr : Repr.S with type a = a) in 
-      let module N = R.Interpret (EqIntr)
-      in N.result
+  fun (type a) repr -> 
+    let module R = (val repr : Repr.S with type a = a) in 
+    let module N = R.Interpret (EqIntr)
+    in N.result

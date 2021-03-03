@@ -25,7 +25,7 @@ module Count : Monoid
   type 'a elt = 'a
 
   let empty = 0
-  let single x = 1
+  let single _ = 1
   let merge = (+)
 end
 
@@ -50,7 +50,7 @@ module Group(K: Map.OrderedType)(M: Monoid) : Monoid
 
   let empty = G.empty
   let single (k,v) = G.singleton k (M.single v)
-  let merge kvs = G.merge (fun k a b -> match a,b with
+  let merge kvs = G.merge (fun _k a b -> match a,b with
     | Some a, Some b -> Some (M.merge a b)
     | None, s | s, None -> s
   ) kvs

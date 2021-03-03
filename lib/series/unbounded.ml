@@ -112,7 +112,7 @@ let append xs ys =
       xs_gen.next s
       >|= function
       | Continue (s,acc) -> Continue (Either.Left s, acc)
-      | Done (s,acc) -> Continue (Either.Right ys_seed, acc)
+      | Done (_,acc) -> Continue (Either.Right ys_seed, acc)
     in
     let next_ys s =
       ys_gen.next s
@@ -131,7 +131,7 @@ let append xs ys =
     }
   }
 
-let bounded_generator ?(batch_size = 1024) seed next is_done =
+let bounded_generator ?(batch_size = 1024) seed next _is_done =
   let iter red =
     let push = red.Reducer.push in
     let check_is_done = match red.Reducer.full_check with

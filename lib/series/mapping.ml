@@ -35,7 +35,7 @@ let new_hashtbl () =
 
 let hash_keys m =
   let fold push =
-    let push k v = push k in
+    let push k _v = push k in
     Hashtbl.fold push m
   in
   Bounded.producer_of_source { Bounded.fold }
@@ -81,7 +81,7 @@ module Source = struct
   let empty = {
     keys = Bounded.empty;
     pairs = Bounded.empty;
-    value = (fun k -> None);
+    value = (fun _k -> None);
     update = (fun updates -> hash_update (new_hashtbl ()) updates);
   }
 
@@ -324,7 +324,7 @@ let group_updates extract_key extract_value red insert rem =
       let acc = push (insert (k,view v1)) acc in
       (kvs,acc)
   in
-  let adapt_term push term (kvs,acc) =
+  let adapt_term _push term (_kvs,acc) =
     term acc
   in
   fun r -> {
@@ -386,7 +386,7 @@ let matching_pairs eq =
     full_check = Some full_pair
   }
 
-let equal key_eq value_eq =
+let equal _key_eq value_eq =
   let group_matching_pairs =
     Bounded.reduce (group fst snd (matching_pairs value_eq))
   in

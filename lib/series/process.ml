@@ -15,7 +15,7 @@ let interrupted = ref false
 let signals = [ 2; 15 ]
 
 let () =
-  let stop signal_handler signal =
+  let stop signal_handler _signal =
     interrupted := true;
     Lwt_unix.disable_signal_handler signal_handler
   in 
@@ -51,6 +51,6 @@ let loop_until_done step =
   let rec loop s =
     step s >>= function
     | Continue s when not !interrupted -> loop s
-    | s -> Lwt.return_unit
+    | _ -> Lwt.return_unit
   in
   loop

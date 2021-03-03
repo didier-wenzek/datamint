@@ -29,7 +29,7 @@ module Bag : Dataset.S
     let add acc x = plus acc (unit x) in
     List.fold_left add zero
 
-  let aggregate init push merge =
+  let aggregate init push _merge =
     let add acc x = push x acc in
     fun xs -> List.fold_left add (init ()) xs
 

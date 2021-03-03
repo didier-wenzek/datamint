@@ -88,7 +88,7 @@ module Make(S: Semantics_witness.S with type 'a repr = 'a) = struct
           (* Printf.printf "XOXOX: expect '%s' but got '%s'\n%!" (Type_witness.show x_t) (Type_witness.show a_t); *)
           assert false 
       )
-      | Sem.DynCExpr(huh,_) ->
+      | Sem.DynCExpr(_huh,_) ->
           (* Printf.printf "XOXOX: expect fun but got '%s'\n%!" (Type_witness.show huh); *)
           assert false
     )
@@ -154,7 +154,7 @@ module Make(S: Semantics_witness.S with type 'a repr = 'a) = struct
         | _ ->
           assert false
       )
-      | Sem.DynCExpr(huh,_) ->
+      | Sem.DynCExpr(_huh,_) ->
         assert false (* generic can only be applied to a function with first argument is a shape.*)
     )
 

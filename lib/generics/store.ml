@@ -1,4 +1,3 @@
-open Lwt.Infix
 open Series.Util
 
 module KeyPath = struct
@@ -171,7 +170,7 @@ module GenKVStore (KV : KVStore) (Fmt : Serialization.Encoding)
     format: 'a Fmt.tc
   }
 
-  let store tc = tc.layout KV.root
+  let _store tc = tc.layout KV.root
   
   let get_value path kv = 
     KV.get_path kv path
@@ -219,7 +218,7 @@ module GenKVStore (KV : KVStore) (Fmt : Serialization.Encoding)
 
   let unit : unit tc = 
     (* Nothing is stored for a unit value *)
-    let layout key = {
+    let layout _key = {
       read_value = (fun _ -> ());
       write_value = (fun kv () -> kv); }
     in
@@ -274,11 +273,11 @@ module GenKVStore (KV : KVStore) (Fmt : Serialization.Encoding)
 
   (* Persisting lists *)
 
-  let list_layout item_layout path =
-    let read_value kv =
+  let list_layout _item_layout _path =
+    let read_value _kv =
       Series.Bounded.empty  (* FIXME *)
     in
-    let write_value kv items =
+    let write_value kv _items =
       kv (* FIXME *)
     in
     {
@@ -304,7 +303,7 @@ module GenKVStore (KV : KVStore) (Fmt : Serialization.Encoding)
       let kvmap = KV.focus path kv in
       KVMap.wrap_kvstore encode_key decode_key encode_val decode_val kvmap
     in
-    let write_value kv pairs =
+    let write_value kv _pairs =
       kv (* FIXME *)
     in
     {

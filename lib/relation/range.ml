@@ -95,11 +95,11 @@ module Make(Elt: Map.OrderedType) = struct
   let gt x y = Elt.compare x y > 0
   let ge x y = Elt.compare x y >= 0
 
-  let max x y =
+  let _max x y =
     if Elt.compare x y >= 0
     then x else y
 
-  let min x y =
+  let _min x y =
     if Elt.compare x y <= 0
     then x else y
 

@@ -17,8 +17,8 @@ let project f r = { r with term = r.term >> f }
 
 let map_fst f r = { r with push = fun (x,y) -> r.push (f x,y) }
 let map_snd f r = { r with push = fun (x,y) -> r.push (x,f y) }
-let filter_fst f = filter (fun (x,y) -> f x)
-let filter_snd f = filter (fun (x,y) -> f y)
+let filter_fst f = filter (fun (x,_) -> f x)
+let filter_snd f = filter (fun (_,y) -> f y)
 let filter_map_fst f r  = { r with push = fun (x,y) -> match f x with Some x' -> r.push (x',y) | None -> id }
 let filter_map_snd f r  = { r with push = fun (x,y) -> match f y with Some y' -> r.push (x,y') | None -> id }
 
@@ -106,10 +106,10 @@ let combine_full_checks f r = match f,r.full_check with
     let check (i,j) = f i || g j in
     Some check
   | Some f, None ->
-    let check (i,j) = f i in
+    let check (i,_) = f i in
     Some check
   | None, Some g ->
-    let check (i,j) = g j in
+    let check (_,j) = g j in
     Some check
   | None, None ->
     None
@@ -168,7 +168,7 @@ let drop_while p r =
 let take_first r = take 1 r
 
 let take_last r = 
-  let push x (o,s) = (Some x,s) in
+  let push x (_,s) = (Some x,s) in
   let term = function
     | None,s -> r.term s
     | Some x, s -> r.term (r.push x s)
@@ -296,7 +296,7 @@ let unique r =
     | (None, s) ->
       let xs = Hashtbl.create 1024 in
       (Some (insert x xs), r.push x s)
-    | (Some xs, s) as xss when Hashtbl.mem xs x ->
+    | (Some xs, _) as xss when Hashtbl.mem xs x ->
       xss
     | (Some xs, s) ->
       (Some (insert x xs), r.push x s)

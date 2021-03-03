@@ -54,7 +54,7 @@ module Count : S
   type 'a res = int
                                                                                                                                                                                                            
   let empty = 0
-  let insert x = succ
+  let insert _ = succ
   let combine = (+)
   let elements = Series.single
   let maximum_opt = None

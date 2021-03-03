@@ -110,7 +110,7 @@ let empty = { iter = fun r -> Reducer.(r.seed) }
 let singleton x = { iter = fun r -> Reducer.(r.seed |> r.push x) }
 let sonc xs x = { iter = fun r -> Reducer.(xs.iter r |> r.push x) }
 let cons x xs = { iter = fun r -> Reducer.(r.seed |> r.push x |> iter r xs) }
-let append xs ys = { iter = fun r -> Reducer.(xs.iter r |> iter r ys) }
+let append xs ys = { iter = fun r -> xs.iter r |> iter r ys }
 let concat xss = { iter = fun r -> xss.iter Reducer.{ r with push = iter r } }
 
 let take n xs = { iter = fun r -> iter_and_term Reducer.(take n { r with term = id }) xs }

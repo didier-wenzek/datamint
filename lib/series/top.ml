@@ -38,7 +38,7 @@ let add k v =
       if is_new then ys else y :: ys
     | ys -> ys
   in
-  fun n x xs ->
+  fun _n x xs ->
     if xs.missing_items > 0
     then 
       let (is_new, asc_items) = insert x xs.asc_items in

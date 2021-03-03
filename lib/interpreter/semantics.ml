@@ -69,10 +69,10 @@ module TaglessFinal : S with
   let empty_env = ()
   let extent_env a env = (a,env)
 
-  let unit env = ()
+  let unit _env = ()
   let pair a b env = (a env, b env)
   let fst p env = fst (p env)
   let snd p env = snd (p env)
 
-  let constant a env = a
+  let constant a _env = a
 end

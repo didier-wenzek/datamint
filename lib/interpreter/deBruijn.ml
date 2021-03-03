@@ -29,7 +29,7 @@ let name n =
 
 let names xs =
   let _,names =
-    List.fold_left (fun (n,names) x -> (n+1, (name n)::names)) (0,[]) xs
+    List.fold_left (fun (n,names) _x -> (n+1, (name n)::names)) (0,[]) xs
   in
   List.rev names
 

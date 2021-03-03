@@ -25,8 +25,8 @@ let topic_partition_count handler topic =
   List.length meta.topic_partitions
 
 let log_to_partition ~host ~topic ~partition =
-  let handler, topic = connect_topic host topic in
-  fun ignore_dir_path -> buffered_logger (Kafka.produce topic partition)
+  let _handler, topic = connect_topic host topic in
+  fun _ignore_dir_path -> buffered_logger (Kafka.produce topic partition)
 
 let log_to_topic ~host ~topic =
   let partition = Kafka.partition_unassigned in
@@ -40,4 +40,4 @@ let log_to_topic_partition ~host ~topic ~key ~encode =
     let msg = encode x in
     Kafka.produce topic partition msg
   in
-  fun ignore_dir_path -> buffered_logger write
+  fun _ignore_dir_path -> buffered_logger write

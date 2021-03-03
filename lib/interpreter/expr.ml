@@ -58,7 +58,7 @@ let pp_typed_def fmt (x,t) =
   pp_string fmt ":";
   pp_type fmt t
 
-let pp_typed_env fmt env =
+let _pp_typed_env fmt env =
   pp_string fmt "|";
   List.iter (fun var ->
     pp_string fmt " ";
@@ -209,7 +209,7 @@ let rec infer_types env = function
     (Generic f, g_t)
   )
 
-and unify_type env x_t e =
+and _unify_type env x_t e =
   let e, e_t = infer_types env e in
   Type.unify e_t x_t;
   e
@@ -330,7 +330,7 @@ let free_vars var_name def_name =
       let name = def_name x in
       loop (name::vars) free_vars body
 
-    | Case (t,x,body,otherwise) ->
+    | Case (_t,x,body,otherwise) ->
       let name = def_name x in
       loop vars (loop (name::vars) free_vars body) otherwise
 
@@ -425,7 +425,7 @@ let de_bruijn var_name def_name idx_name idx_def =
   let rewrite_def = idx_def in
   fun expr -> 
     let free_vars = free_vars var_name def_name expr in
-    let init_env e = free_vars in
+    let init_env _e = free_vars in
     let rewrite = rewrite_variables init_env augment_env rewrite_var rewrite_def in
     (rewrite expr, free_vars)
 
@@ -439,12 +439,12 @@ let de_bruijn_typed =
   let var_name name_type_args = name_type_args in
   let var_idx name_type_args vars = DeBruijn.idx_of name_type_args vars in
   let def_name (name, _) = (name,[]) in  (* A lambda introduces a mono-morphic variable *)
-  let def_idx (_, type_expr) vars = type_expr in
+  let def_idx (_, type_expr) _vars = type_expr in
   de_bruijn var_name def_name var_idx def_idx
 
 let rename_variables rewrite_var =
   let init_env _ = () in
-  let augment_env x () = () in
+  let augment_env _ () = () in
   let rewrite_var x () = rewrite_var x in
   let rewrite_def x () = x in
   rewrite_variables init_env augment_env rewrite_var rewrite_def

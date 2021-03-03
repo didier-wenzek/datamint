@@ -104,7 +104,7 @@ module BagGroup(Elt: Set.OrderedType) : G
   let update f k kvs =
     M.add k (f (find k kvs)) kvs
 
-  let combine f xs = M.merge (fun k a b -> match a,b with
+  let combine f xs = M.merge (fun _k a b -> match a,b with
     | Some a, Some b -> Some (f a b)
     | None, s | s, None -> s
   ) xs
@@ -138,7 +138,7 @@ module Mapping(K: Map.OrderedType)(V: M) : M
 
   let empty = G.empty
   let single (k,v) = G.singleton k (V.single v)
-  let merge kvs = G.merge (fun k a b -> match a,b with
+  let merge kvs = G.merge (fun _k a b -> match a,b with
     | Some a, Some b -> Some (V.merge a b)
     | None, s | s, None -> s
   ) kvs
@@ -150,7 +150,7 @@ module Mapping(K: Map.OrderedType)(V: M) : M
   let push (k,v) kvs = 
     G.add k (V.push v (find k kvs)) kvs
 
-  let push_all kvs = G.merge (fun k a b -> match a,b with
+  let push_all kvs = G.merge (fun _k a b -> match a,b with
     | Some a, Some b -> Some (V.push_all a b)
     | None, s | s, None -> s
   ) kvs
@@ -166,12 +166,12 @@ module MappingOpt(K: Map.OrderedType)(V: S) : M
 
   let empty = G.empty
   let single (k,v) = G.singleton k (V.single v)
-  let merge kvs = G.merge (fun k a b -> match a,b with
+  let merge kvs = G.merge (fun _k a b -> match a,b with
     | Some a, Some b -> Some (V.merge a b)
     | None, s | s, None -> s
   ) kvs
 
-  let find k kvs =
+  let _find k kvs =
     try Some (G.find k kvs)
     with Not_found -> None
 
@@ -185,7 +185,7 @@ module MappingOpt(K: Map.OrderedType)(V: S) : M
   let push (k,v) kvs =
     G.add k (update k v kvs) kvs
 
-  let push_all kvs = G.merge (fun k a b -> match a,b with
+  let push_all kvs = G.merge (fun _k a b -> match a,b with
     | Some a, Some b -> Some (V.push_all a b)
     | None, s | s, None -> s
   ) kvs
@@ -202,7 +202,7 @@ module MappingRev(K: Map.OrderedType)(V: G) : G
   let empty = G.empty
   let single (k,v) = G.singleton k (V.single v)
   let opposite_single (k,v) = G.singleton k (V.opposite_single v)
-  let merge kvs = G.merge (fun k a b -> match a,b with
+  let merge kvs = G.merge (fun _k a b -> match a,b with
     | Some a, Some b -> Some (V.merge a b)
     | None, s | s, None -> s
   ) kvs
@@ -216,7 +216,7 @@ module MappingRev(K: Map.OrderedType)(V: G) : G
   let push (k,v) kvs = 
     G.add k (V.push v (find k kvs)) kvs
 
-  let push_all kvs = G.merge (fun k a b -> match a,b with
+  let push_all kvs = G.merge (fun _k a b -> match a,b with
     | Some a, Some b -> Some (V.push_all a b)
     | None, s | s, None -> s
   ) kvs
@@ -224,7 +224,7 @@ module MappingRev(K: Map.OrderedType)(V: G) : G
   let remove (k,v) kvs =
     G.add k (V.remove v (find k kvs)) kvs
 
-  let remove_all kvs = G.merge (fun k a b -> match a,b with
+  let remove_all kvs = G.merge (fun _k a b -> match a,b with
     | Some a, Some b -> Some (V.remove_all a b)
     | None, s | s, None -> s
   ) kvs

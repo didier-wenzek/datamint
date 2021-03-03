@@ -85,4 +85,4 @@ let messages_of_partition ~host ~topic ~partition =
   Unbounded.of_source (source_of_partition ~host ~topic ~partition)
 
 let kafka_partition ~host ~topic ~partition =
-  Incremental_value.of_unbounded (messages_of_partition host topic partition)
+  Incremental_value.of_unbounded (messages_of_partition ~host ~topic ~partition)

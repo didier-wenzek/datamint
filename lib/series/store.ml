@@ -98,7 +98,7 @@ let write_str str cout =
 let write_str_stdout str =
   write_str str Lwt_io.stdout
 
-let console_logger encode ignored_path = 
+let console_logger encode _ignored_path = 
   buffered_logger encode write_str_stdout
 
 let file_logger encode file_path dir_path =
@@ -201,7 +201,7 @@ let product_store a_store b_store =
 let combine_store a_store b_store =
   fun path -> product_store (a_store path) (b_store path)
 
-let unit_store path =
+let unit_store _path =
   let nop () = Lwt.return_unit in
   { read_content = nop;
     write_content = nop;
@@ -210,21 +210,21 @@ let unit_store path =
 let take_left = (
   (fun left () -> left),
   (fun left -> left),
-  (fun left -> ()))
+  (fun _left -> ()))
 
 let take_right = (
   (fun () right -> right),
-  (fun right -> ()),
+  (fun _right -> ()),
   (fun right -> right))
 
 let take_left_tail (comb,extract_left,extract_right) = (
   (fun (left, tail) (right, ()) -> (comb left right, tail)),
   (fun (head, tail) -> (extract_left head, tail)),
-  (fun (head, tail) -> (extract_right head, ())))
+  (fun (head, _tail) -> (extract_right head, ())))
 
 let take_right_tail (comb,extract_left,extract_right) = (
   (fun (left, ()) (right, tail) -> (comb left right, tail)),
-  (fun (head, tail) -> (extract_left head, ())),
+  (fun (head, _tail) -> (extract_left head, ())),
   (fun (head, tail) -> (extract_right head, tail)))
 
 let store_of_combiner = function 

@@ -1,7 +1,7 @@
 module Json = Yojson.Safe
 open Serialization.Result
 
-type json = Json.json
+type json = Json.t
 
 module Decoder = struct
   type 'a decoder = json -> ('a,string) result
@@ -64,7 +64,7 @@ module Decoder = struct
   let field name decoder = function
     | `Assoc pairs as json -> (
       try List.assoc name pairs |> decoder
-      with not_found -> Error (Format.sprintf "no '%s' field in object: %s" name (Json.pretty_to_string json))
+      with _ -> Error (Format.sprintf "no '%s' field in object: %s" name (Json.pretty_to_string json))
     )
     | json -> Error (Format.sprintf "not an object: %s" (Json.pretty_to_string json))
 
@@ -88,7 +88,7 @@ module Decoder = struct
       try
         let decode = List.assoc tag named_decoders in
         decode v
-      with not_found -> Error (Format.sprintf "unknow tag '%s': %s" tag (Json.pretty_to_string v))
+      with _ -> Error (Format.sprintf "unknow tag '%s': %s" tag (Json.pretty_to_string v))
     )
     | json -> Error (Format.sprintf "not an object: %s" (Json.pretty_to_string json))
 

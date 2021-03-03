@@ -1,5 +1,3 @@
-open Serialization.Result
-
 module Decoder = struct
   type 'a decoder =
     | Id : (string -> 'a) -> 'a decoder
@@ -46,7 +44,7 @@ module Decoder = struct
   let tuple pair_decoder = pair_decoder
 
   let empty_record = unit
-  let field name decoder = decoder
+  let field _name decoder = decoder
   let (&) = pair
   let record fields_decoder = fields_decoder
 
@@ -104,7 +102,7 @@ module Encoder = struct
   let tuple pair_encoder = pair_encoder
 
   let empty_record = unit
-  let field name encoder = encoder
+  let field _name encoder = encoder
   let (&) = pair
   let record fields_encoder = fields_encoder
 

@@ -74,17 +74,17 @@ end = struct
     let op_sig = Type_witness.(FunSig(string_sig, GeneratorSig string_sig)) in
     (op_type, Type_witness.MonoDyn (op_sig, Series.IO.file_split char))
 
-  let kyoto_pairs =
+  let _kyoto_pairs =
     let op_type = poly_t 0 Type.(fun_t string_t (GeneratorType (PairType (string_t,string_t)))) in
     let op_sig = Type_witness.(FunSig(string_sig, GeneratorSig (PairSig (string_sig,string_sig)))) in
     (op_type, Type_witness.MonoDyn (op_sig, KyotoCabinet.KVStore.all_pairs))
 
-  let kyoto_pairs_with_prefix =
+  let _kyoto_pairs_with_prefix =
     let op_type = poly_t 0 Type.(fun_t string_t (fun_t string_t (GeneratorType (PairType (string_t,string_t))))) in
     let op_sig = Type_witness.(FunSig(string_sig, FunSig(string_sig, GeneratorSig (PairSig (string_sig,string_sig))))) in
     (op_type, Type_witness.MonoDyn (op_sig, KyotoCabinet.KVStore.pairs_with_prefix))
 
-  let kyoto_pairs_within_range =
+  let _kyoto_pairs_within_range =
     let op_type = poly_t 0 Type.(fun_t string_t (fun_t string_t (fun_t string_t (GeneratorType (PairType (string_t,string_t)))))) in
     let op_sig = Type_witness.(FunSig(string_sig, FunSig(string_sig, FunSig(string_sig, GeneratorSig (PairSig (string_sig,string_sig)))))) in
     (op_type, Type_witness.MonoDyn (op_sig, KyotoCabinet.KVStore.pairs_within_range))

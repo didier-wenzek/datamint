@@ -200,7 +200,6 @@ let rec show: type a. a t -> string = function
 
 let top = fst
 let pop_than f (_,s) = f s
-let id x = x
 
 type _ field_getter =
   FieldGetter: ('a -> 'b) * 'b t -> 'a field_getter
@@ -244,7 +243,7 @@ let rec eval_type env = function
       List.fold_left (eval_field_type env) (eval_type env t) fields
   )
 
-  | Type.CaseType (cases, res) ->
+  | Type.CaseType (cases, _res) ->
     (* The result type is only used during type checking. *)
     eval_type env cases
 

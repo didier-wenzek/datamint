@@ -24,18 +24,18 @@ type ('a,'b,'c) injector = 'a -> 'b -> 'c
 
 let record_source = Multiplicity.unit
 
-let map f m = m
+let map _f m = m
 let generate rel _ _ = Multiplicity.mult (Capability.get rel.gen)
 let map_rel  rel _ _ = Multiplicity.mult (Capability.get rel.map)
 let inv_rel  rel _ _ = Multiplicity.mult (Capability.get rel.inv)
-let filter   rel _ _ = Multiplicity.make_partial
+let filter   _   _ _ = Multiplicity.make_partial
 
 let gen_cap rel = Capability.map (fun factor _ _ -> Multiplicity.mult factor) rel.gen
 let map_cap rel = Capability.map (fun factor _ _ -> Multiplicity.mult factor) rel.map
 let inv_cap rel = Capability.map (fun factor _ _ -> Multiplicity.mult factor) rel.inv
 
 let generate_member col _ = Multiplicity.mult (Capability.get col)
-let filter_member   col _ = Multiplicity.make_partial
+let filter_member   _   _ = Multiplicity.make_partial
 
 let reduce red _ _         = Capability.some red
 let group _ _ m            = { gen = Capability.some m; map = Capability.some Multiplicity.at_least_one; inv = Capability.some Multiplicity.zero_or_more; }
