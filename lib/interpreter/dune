@@ -1,10 +1,8 @@
-(jbuild_version 1)
-
 (library
- ((name Interpreter)
-  (public_name datamint.interpreter)
-  (preprocess (pps (ppx_deriving.show)))
-  (libraries (datamint.series datamint.generics datamint.kyoto lambda-term))))
+ (name Interpreter)
+ (public_name datamint.interpreter)
+ (preprocess (pps ppx_deriving.show))
+ (libraries datamint.series datamint.generics datamint.kyoto lambda-term))
 
-(ocamllex (lexer))
-(ocamlyacc (parser))
+(ocamllex lexer)
+(ocamlyacc parser)

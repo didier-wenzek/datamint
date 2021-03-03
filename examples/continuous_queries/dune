@@ -1,7 +1,5 @@
-(jbuild_version 1)
-
 (executables
- ((names (run_continuously))
-  (libraries (datamint datamint.kafka datamint.kyoto lwt.unix str))
-  (public_names (run_continuously))
-  (package datamint-examples)))
+ (names run_continuously)
+ (libraries datamint datamint.kafka datamint.kyoto lwt.unix str)
+ (public_names run_continuously)
+ (package datamint-examples))

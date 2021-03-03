@@ -1,6 +1,4 @@
-(jbuild_version 1)
-
 (library
- ((name DataMint)
-  (public_name datamint)
-  (libraries (Series Interpreter lwt))))
+ (name DataMint)
+ (public_name datamint)
+ (libraries Series Interpreter lwt))

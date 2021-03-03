@@ -1,7 +1,5 @@
-(jbuild_version 1)
-
 (executables
- ((names (blog_author_posts capability blog_query_bis))
-  (public_names (blog_author_posts capability blog_query_bis))
-  (package datamint-eval)
-  (libraries ())))
+ (names blog_author_posts capability blog_query_bis)
+ (public_names blog_author_posts capability blog_query_bis)
+ (package datamint-eval)
+ (libraries))

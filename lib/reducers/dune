@@ -1,6 +1,4 @@
-(jbuild_version 1)
-
 (library
- ((name Reducers)
-  (public_name datamint.reducers)
-  (libraries (lwt))))
+ (name Reducers)
+ (public_name datamint.reducers)
+ (libraries lwt))

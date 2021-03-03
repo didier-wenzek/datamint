@@ -1,6 +1,4 @@
-(jbuild_version 1)
-
 (library
- ((name Relation)
-  (public_name datamint.relation)
-  (libraries (datamint.series))))
+ (name Relation)
+ (public_name datamint.relation)
+ (libraries datamint.series))

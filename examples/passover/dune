@@ -1,7 +1,5 @@
-(jbuild_version 1)
-
 (executables
- ((names (passover event_generator))
-  (libraries (datamint datamint.kafka datamint.kyoto lwt.unix str cmdliner))
-  (public_names (passover passover_event_generator))
-  (package datamint-examples)))
+ (names passover event_generator)
+ (libraries datamint datamint.kafka datamint.kyoto lwt.unix str cmdliner)
+ (public_names passover passover_event_generator)
+ (package datamint-examples))

@@ -1,10 +1,7 @@
-(jbuild_version 1)
-
 (executables
- ((names (tests))
-  (libraries (oUnit datamint.series datamint.interpreter str))))
+ (names tests)
+ (libraries oUnit datamint.series datamint.interpreter str))
 
 (alias
- ((name    runtest)
-  (deps    (tests.exe))
-  (action  (run ${<}))))
+ (name    runtest)
+ (deps    tests.exe))
