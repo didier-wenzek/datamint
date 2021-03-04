@@ -45,7 +45,7 @@ let publish topic msg =
 
 let runner kafka_host =
   Lwt_main.run (
-    let (handler, topic) = connect_topic kafka_host positions_messages in
+    let (_handler, topic) = connect_topic kafka_host positions_messages in
     gen_events (publish topic)
   )
 

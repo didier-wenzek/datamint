@@ -119,21 +119,21 @@ let most_recent =      (* FIXME: should take the most recent, not the last provi
   }
 
 let visitor_of_move = function
-  | Insert (v,r) | Remove (v,r) -> v
+  | Insert (v,_) | Remove (v,_) -> v
 
 let room_of_move = function
-  | Insert (v,r) | Remove (v,r) -> r
+  | Insert (_,r) | Remove (_,r) -> r
 
 let count_update_of_move = function
-  | Insert (v,r) -> 1
-  | Remove (v,r) -> -1
+  | Insert (_,_) -> 1
+  | Remove (_,_) -> -1
 
 
 let filter_insert = function
   | Insert i -> Some i
   | _ -> None
 
-let key_of_count (r,c) = r
+let key_of_count (r,_) = r
 
 let string_of_count (r,c) =
   Printf.sprintf "{ \"room\": \"%s\", \"count\": %d }" r c

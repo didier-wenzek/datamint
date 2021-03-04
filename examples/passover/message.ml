@@ -33,7 +33,7 @@ let position_of_json =
 let json_of_position =
   position_message_of_event
   >> Generics.Serialization.format_encoder json position_message
-  >> Result.on_error (fun e -> assert false)
+  >> Result.on_error (fun _ -> assert false)
 
 type 'a update =
   | Insert of 'a
@@ -54,7 +54,7 @@ let move_of_json =
 
 let json_of_move =
   Generics.Serialization.format_encoder json move_message
-  >> Result.on_error (fun e -> assert false)
+  >> Result.on_error (fun _ -> assert false)
 
 let string_of_move = function
   | Insert v -> Format.sprintf "+ %s" (json_of_move v)

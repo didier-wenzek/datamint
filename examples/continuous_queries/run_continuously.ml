@@ -88,7 +88,7 @@ let loop6 () =
   let store_count = kyoto_string_int_store "top_word_count_state.kct" in
   let file = Store.file_view id "top_word_count.txt" in
   let insert wc = Some wc in
-  let remove wc = None in
+  let remove _wc = None in
   KafkaStore.Source.kafka_partition ~host:"localhost" ~topic:"test" ~partition:1
   |> Dataset.flat_map words 
   |> Dataset.group_updates id id count insert remove
