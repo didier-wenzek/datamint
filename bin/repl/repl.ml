@@ -72,4 +72,4 @@ let main () =
 
 let () =
   Lwt_engine.set (new Lwt_engine.libev ());
-  Lwt_unix.with_async_detach main
+  main ()

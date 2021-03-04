@@ -60,9 +60,9 @@ module Make(I: Interpreter) = struct
 
   class read_line ~term ~history ~step = object(self)
     inherit LTerm_read_line.read_line ~history ()
-    inherit [Zed_utf8.t] LTerm_read_line.term term
+    inherit [Zed_string.t] LTerm_read_line.term term
 
-    method show_box = false
+    method! show_box = false
 
     initializer
       self#set_prompt (S.const (make_prompt step));
@@ -72,6 +72,8 @@ module Make(I: Interpreter) = struct
      | Cancelation of background tasks                                 |
      +-----------------------------------------------------------------+ *)
 
+
+(* FIXME 
   let running_tasks = Lwt_sequence.create ()
 
   let rec cancel_running_tasks i =
@@ -100,13 +102,15 @@ module Make(I: Interpreter) = struct
     let cancel = Lwt.add_task_r running_tasks in
     (*Lwt.async (fun () -> Lwt.pick [cancel_on_control_c term; cancel]);*)
     Lwt.pick [t; cancel] 
+*)
+  let run_unless_canceled _term t = t
 
   (* +-----------------------------------------------------------------+
      | Parsing and evaluation                                          |
      +-----------------------------------------------------------------+ *)
 
   let parse buffer line =
-     Buffer.add_string buffer line;
+     Buffer.add_string buffer (Zed_string.to_utf8 line);
      let cmd = Buffer.contents buffer in
      let expr = I.parse cmd in
      ( match expr with
@@ -159,14 +163,14 @@ module Make(I: Interpreter) = struct
       >>= fun (state, result) ->
       display_result term step result
       >>= fun () ->
-      LTerm_history.add history command;
+      LTerm_history.add history (Zed_string.of_utf8 command);
       LTerm_history.save history history_file
       >>= fun () ->
       loop term history history_file (step+1) buffer state
     | command, ParseError exn ->
       LTerm.fprintls term (make_error step (I.error_msg exn))
       >>= fun () ->
-      LTerm_history.add history command;
+      LTerm_history.add history (Zed_string.of_utf8 command);
       loop term history history_file step buffer state
     | _, UncompleteExpr ->
       loop term history history_file step buffer state
@@ -185,7 +189,7 @@ module Make(I: Interpreter) = struct
 
   let main config =
     let history_file = home I.history_file in
-    let _ = Lwt_unix.on_signal Sys.sigint cancel_running_tasks in
+    (* let _ = Lwt_unix.on_signal Sys.sigint cancel_running_tasks in *)
     LTerm_inputrc.load ()
     >>= fun () ->
     Lwt.catch (fun () ->
