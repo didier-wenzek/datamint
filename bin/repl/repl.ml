@@ -1,5 +1,4 @@
 open Lwt
-open Printf
 open DataMint.Interpreter
 module Process = DataMint.Series.Process
 

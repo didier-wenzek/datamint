@@ -26,13 +26,13 @@ let loop0 () =
   
 let loop1 () =
   let log = Store.file_logger id "kafka_topic_test.log" in
-  KafkaStore.Source.kafka_partition "localhost" "test" 1
+  KafkaStore.Source.kafka_partition ~host:"localhost" ~topic:"test" ~partition:1
   |> Dataset.log log 
   |> Dataset.run "/tmp/" "query_1"
   
 let loop2 () =
   let file = Store.file_view string_of_int "kafka_topic_test.count" in
-  KafkaStore.Source.kafka_partition "localhost" "test" 1
+  KafkaStore.Source.kafka_partition ~host:"localhost" ~topic:"test" ~partition:1
   |> Dataset.dedupe
   |> count
   |> Dataset.persist_view file 
@@ -40,7 +40,7 @@ let loop2 () =
 
 let loop2' () =
   let file = Store.file_view string_of_int "kafka_topic_test.unique_count" in
-  KafkaStore.Source.kafka_partition "localhost" "test" 1
+  KafkaStore.Source.kafka_partition ~host:"localhost" ~topic:"test" ~partition:1
   |> Dataset.unique
   |> count
   |> Dataset.persist_view file 
@@ -55,19 +55,17 @@ let kyoto_string_int_store =
     KyotoCabinet.KVStore.store ~encode_key ~decode_key ~encode_value ~decode_value ~file_path
 
 let loop3 () =
-  let open Store in
   let count = Reducer.map (constant 1) sum in
   let store = kyoto_string_int_store "word_count.kct" in
-  KafkaStore.Source.kafka_partition "localhost" "test" 1
+  KafkaStore.Source.kafka_partition ~host:"localhost" ~topic:"test" ~partition:1
   |> Dataset.flat_map words
   |> Dataset.group id id count
   |> Dataset.persist_state store 
   |> Dataset.run "/tmp/" "query_3"
   
 let loop4 () =
-  let open Store in
   let log = KafkaStore.Sink.log_to_topic ~host:"localhost" ~topic:"spam" in
-  KafkaStore.Source.kafka_partition "localhost" "test" 1
+  KafkaStore.Source.kafka_partition ~host:"localhost" ~topic:"test" ~partition:1
   |> Dataset.filter spam
   |> Dataset.log log 
   |> Dataset.run "/tmp/" "query_4"
@@ -78,7 +76,7 @@ let loop5 () =
   let store = kyoto_string_int_store "word_count_looking_new_words.kct" in
   let insert (w,c) = Format.sprintf "new word with %d samples: %s" c w in
   let remove (w,c) = Format.sprintf "word %s has now more than %d samples" w c in
-  KafkaStore.Source.kafka_partition "localhost" "test" 1
+  KafkaStore.Source.kafka_partition ~host:"localhost" ~topic:"test" ~partition:1
   |> Dataset.flat_map words 
   |> Dataset.group_updates id id count insert remove
   |> Dataset.persist_state store 
@@ -91,7 +89,7 @@ let loop6 () =
   let file = Store.file_view id "top_word_count.txt" in
   let insert wc = Some wc in
   let remove wc = None in
-  KafkaStore.Source.kafka_partition "localhost" "test" 1
+  KafkaStore.Source.kafka_partition ~host:"localhost" ~topic:"test" ~partition:1
   |> Dataset.flat_map words 
   |> Dataset.group_updates id id count insert remove
   |> Dataset.persist_state store_count
