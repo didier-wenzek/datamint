@@ -18,9 +18,27 @@ let lwt_action push = {
 
 let cap_with capped red = {
   red with
-  cont = (fun xp f -> red.cont xp (fun x ->
+  cont = fun xp f -> red.cont xp (fun x ->
     if capped x
     then red.term x
     else f x
-  ));
+  )
+}
+
+let map f red = {
+  red with
+  push = fun x -> red.push (f x)
+}
+
+let filter p red = {
+  red with
+  push = fun x ->
+    if p x
+    then red.push x
+    else red.term
+}
+
+let flat_map ~iter f red = {
+  red with
+  push = fun x -> iter red (f x)
 }
