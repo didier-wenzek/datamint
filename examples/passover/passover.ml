@@ -15,7 +15,7 @@ let info =
         aggregates visitor data
         and produces visitor alerts.";
   ] in
-  Term.info "passover" ~doc ~man
+  Cmd.info "passover" ~doc ~man
 
 let partition =
   let doc = "partition this instance will consume (for all Kafka topics)" in
@@ -177,12 +177,10 @@ let runner kafka_host working_dir partition partition_count =
   ])
 
 let runner_t =
-  Term.(pure runner $ kafka_host $ working_dir $ partition $ partition_count)
+  Term.(const runner $ kafka_host $ working_dir $ partition $ partition_count)
 
 let main () =
-  match Term.eval (runner_t, info) with
-  | `Error _ -> exit 1
-  | _ -> exit 0
+  Cmd.v info runner_t |> Cmd.eval |> exit
 
 let () =
   Lwt_engine.set (new Lwt_engine.libev ());

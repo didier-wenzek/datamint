@@ -7,7 +7,7 @@ let info =
     `S "DESCRIPTION";
     `P "$(tname)";
   ] in
-  Term.info "passover-event-generator" ~doc ~man
+  Cmd.info "passover-event-generator" ~doc ~man
 
 let kafka_host =
   let doc = "Connection string to the Kafka cluster (comma separated list of hostnames or hostname:port pairs) ." in
@@ -50,12 +50,10 @@ let runner kafka_host =
   )
 
 let runner_t =
-  Term.(pure runner $ kafka_host)
+  Term.(const runner $ kafka_host)
 
 let main () =
-  match Term.eval (runner_t, info) with
-  | `Error _ -> exit 1
-  | _ -> exit 0
+  Cmd.v info runner_t |> Cmd.eval |> exit
 
 let () =
   Lwt_engine.set (new Lwt_engine.libev ());
