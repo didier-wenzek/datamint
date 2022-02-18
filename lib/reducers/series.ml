@@ -46,6 +46,6 @@ let filter p xs =
 let iter red xs = xs.fold red
 
 let flat_map f xs =
-  let fold red = xs.fold (Action.flat_map iter f red) in
+  let fold red = xs.fold (Action.flat_map ~iter f red) in
   { fold }
 
