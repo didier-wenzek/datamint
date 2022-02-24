@@ -5,12 +5,12 @@ open Util
 let seq = Bounded.of_list
 
 let test_apply name f x y =
-  let test test_ctxt =
+  let test _test_ctxt =
     assert_equal y (f x)
   in name >:: test
 
 let test_apply2 name f x y z =
-  let test test_ctxt =
+  let test _test_ctxt =
     assert_equal z (f x y)
   in name >:: test
 

@@ -53,7 +53,7 @@ let rec check_results expected_results actual_values =
 let test_eval str expected_results =
   let name = "eval "^str in
   let env = Comp.initial_env in
-  let test test_ctxt =
+  let test _test_ctxt =
     let exprs = Comp.parse_string str in
     let (_, actual_values) = Comp.eval_exprs env exprs in
     check_results expected_results actual_values
@@ -68,7 +68,7 @@ let test_format format shape value =
     sprintf "[[%s]]" value
   in
   let env = Comp.initial_env in
-  let test test_ctxt =
+  let test _test_ctxt =
     let exprs = Comp.parse_string code in
     let (_, actual_values) = Comp.eval_exprs env exprs in
     check_results [expected_result] actual_values
@@ -77,7 +77,7 @@ let test_format format shape value =
 let test_error str expected_error =
   let name = "error "^str in
   let env = Comp.initial_env in
-  let test test_ctxt =
+  let test _test_ctxt =
     try
       let exprs = Comp.parse_string str in
       let _ = Comp.eval_exprs_bg env exprs in
