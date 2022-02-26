@@ -144,7 +144,7 @@ module Impl_bis(Dataset: Dataset.S) : S_bis = struct
   type 'a dataset = 'a Dataset.t
   type 'a value = 'a dataset
 
-  type ('gen_cap,'map_cap,'inv_cap,'chk_cap) rel_cap = C
+  type ('gen_cap,'map_cap,'inv_cap,'chk_cap) rel_cap = |
   type gen_cap = (Gen.yes,Map.t,Inv.t,Chk.t) rel_cap
   type map_cap = (Gen.t,Map.yes,Inv.t,Chk.t) rel_cap
   type inv_cap = (Gen.t,Map.t,Inv.yes,Chk.t) rel_cap
